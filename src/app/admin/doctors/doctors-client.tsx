@@ -42,6 +42,8 @@ export function DoctorsClient({ initialDoctors }: Props) {
     async function fetchStats() {
       setLoadingStats(true);
       try {
+        // TypeScript narrowing for selectedId
+        if (!selectedId) return;
         const data = await getDetailedDoctorStats(selectedId);
         setStats(data);
       } catch (err) {
