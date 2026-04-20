@@ -144,7 +144,7 @@ export function ManageLeavesDialog({ doctorId, doctorName, trigger }: ManageLeav
                   </div>
                   <Button 
                     variant="ghost" 
-                    size="icon-xs" 
+                    size="icon-sm" 
                     className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleDeleteLeave(leave.id)}
                   >
