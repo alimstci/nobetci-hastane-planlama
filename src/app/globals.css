@@ -211,3 +211,45 @@
   height: 20px;
   @apply bg-primary rounded-r-full shadow-[0_0_10px_var(--ring)];
 }
+/* --- Print Styles --- */
+@media print {
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+
+  .no-print, aside, nav, button, form {
+    display: none !important;
+  }
+
+  main, .container {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .lg\:col-span-9 {
+    grid-column: span 12 / span 12 !important;
+  }
+
+  .lg\:col-span-3 {
+    display: none !important;
+  }
+
+  .glass-card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    background: white !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .text-gradient {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+  }
+}

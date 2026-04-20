@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MonthNavigator } from '@/components/month-navigator';
+import { ExportActions } from '@/components/export-actions';
 import { 
   Calendar as CalendarIcon, 
   Sparkles, 
@@ -88,17 +89,20 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
           <MonthNavigator currentMonth={yearMonth} />
         </div>
         
-        <form action={generateAutoPlan.bind(null, yearMonth)}>
-          <Button 
-            type="submit"
-            variant="premium"
-            size="lg"
-            className="h-16 px-10"
-          >
-            <Sparkles className="mr-3 h-5 w-5" /> 
-            OTOMATİK HESABI BAŞLAT
-          </Button>
-        </form>
+        <div className="flex flex-wrap items-end gap-4">
+          <ExportActions assignments={assignments} monthName={format(monthStart, 'MMMM yyyy', { locale: tr })} />
+          <form action={generateAutoPlan.bind(null, yearMonth)}>
+            <Button 
+              type="submit"
+              variant="premium"
+              size="lg"
+              className="h-16 px-10"
+            >
+              <Sparkles className="mr-3 h-5 w-5" /> 
+              OTOMATİK HESABI BAŞLAT
+            </Button>
+          </form>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">

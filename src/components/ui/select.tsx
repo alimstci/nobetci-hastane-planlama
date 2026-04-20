@@ -115,7 +115,7 @@ function SelectItem({
   className,
   children,
   ...props
-}: SelectPrimitive.Item.Props) {
+}: SelectPrimitive.Item.Props & { textValue?: string }) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
