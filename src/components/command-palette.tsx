@@ -102,8 +102,8 @@ export function CommandPalette() {
                         <button
                           key={i}
                           onClick={() => {
-                            if (item.href) runCommand(() => router.push(item.href));
-                            if (item.action) runCommand(item.action);
+                            if ('href' in item && item.href) runCommand(() => router.push(item.href as string));
+                            if ('action' in item && item.action) runCommand(item.action as () => void);
                           }}
                           className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-white/10 text-slate-300 hover:text-white transition-all group border border-transparent hover:border-white/5"
                         >
