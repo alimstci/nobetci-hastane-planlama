@@ -28,12 +28,14 @@ export function AddDoctorDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, reset, setValue } = useForm({
+  const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       fullName: '',
       groupType: 'normal' as 'normal' | 'weekend',
     }
   });
+
+  const selectedGroup = watch('groupType');
 
   const onSubmit = async (data: { fullName: string; groupType: 'normal' | 'weekend' }) => {
     setLoading(true);
@@ -79,7 +81,9 @@ export function AddDoctorDialog() {
               defaultValue="normal"
             >
               <SelectTrigger>
-                <SelectValue placeholder="Grup seçin" />
+                <SelectValue placeholder="Grup seçin">
+                  {selectedGroup === 'normal' ? 'Normal Grup' : 'Hafta Sonu Grubu'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="normal" textValue="Normal Grup">Normal Grup</SelectItem>

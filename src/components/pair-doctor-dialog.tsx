@@ -76,7 +76,9 @@ export function PairDoctorDialog({ doctors }: PairDoctorDialogProps) {
             <Label>1. Doktor</Label>
             <Select onValueChange={(val) => val && setDoctor1(val)} value={doctor1}>
               <SelectTrigger>
-                <SelectValue placeholder="Doktor seçin" />
+                <SelectValue placeholder="Doktor seçin">
+                  {doctors.find(d => d.id === doctor1)?.full_name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {availableDoctors.map(d => (
@@ -94,7 +96,9 @@ export function PairDoctorDialog({ doctors }: PairDoctorDialogProps) {
             <Label>2. Doktor</Label>
             <Select onValueChange={(val) => val && setDoctor2(val)} value={doctor2}>
               <SelectTrigger>
-                <SelectValue placeholder="Doktor seçin" />
+                <SelectValue placeholder="Doktor seçin">
+                  {doctors.find(d => d.id === doctor2)?.full_name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {availableDoctors.filter(d => d.id !== doctor1).map(d => (
