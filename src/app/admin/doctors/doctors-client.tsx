@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { AddDoctorDialog } from '@/components/add-doctor-dialog';
 import { PairDoctorDialog } from '@/components/pair-doctor-dialog';
 import { ManageLeavesDialog } from '@/components/manage-leaves-dialog';
+import { ManageEkuriDialog } from '@/components/manage-ekuri-dialog';
 import { getDetailedDoctorStats } from '@/app/actions/doctor-actions';
 
 interface Props {
@@ -80,7 +81,10 @@ export function DoctorsClient({ initialDoctors }: Props) {
               Toplam {initialDoctors?.length} Kayıtlı
             </p>
           </div>
-          <AddDoctorDialog />
+          <div className="flex items-center gap-2">
+            <ManageEkuriDialog doctors={initialDoctors} />
+            <AddDoctorDialog />
+          </div>
         </div>
 
         <div className="relative group">
