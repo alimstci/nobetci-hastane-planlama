@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 interface ManageLeavesDialogProps {
   doctorId: string;
   doctorName: string;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
 }
 
 export function ManageLeavesDialog({ doctorId, doctorName, trigger }: ManageLeavesDialogProps) {
