@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MedCurator | Staff Management Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#334a55",
+                    "surface": "#f8f9fb",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-error": "#ffffff",
+                    "on-tertiary-container": "#fffbff",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#8df5e4",
+                    "secondary-fixed": "#cde6f4",
+                    "on-background": "#191c1e",
+                    "error": "#ba1a1a",
+                    "background": "#f8f9fb",
+                    "on-secondary-fixed": "#051e28",
+                    "primary-fixed-dim": "#70d8c8",
+                    "primary-container": "#008376",
+                    "surface-variant": "#e0e3e5",
+                    "surface-tint": "#006b5f",
+                    "on-primary-container": "#f4fffb",
+                    "surface-container": "#eceef0",
+                    "tertiary": "#91462c",
+                    "on-primary-fixed-variant": "#005048",
+                    "tertiary-container": "#b05e41",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-container": "#506873",
+                    "secondary": "#4a626d",
+                    "on-primary-fixed": "#00201c",
+                    "secondary-fixed-dim": "#b1cad7",
+                    "on-tertiary-fixed-variant": "#763219",
+                    "on-surface": "#191c1e",
+                    "inverse-primary": "#70d8c8",
+                    "tertiary-fixed": "#ffdbcf",
+                    "on-tertiary-fixed": "#390c00",
+                    "inverse-surface": "#2d3133",
+                    "tertiary-fixed-dim": "#ffb59c",
+                    "secondary-container": "#cde6f4",
+                    "outline-variant": "#bcc9c5",
+                    "error-container": "#ffdad6",
+                    "on-surface-variant": "#3d4946",
+                    "surface-container-high": "#e6e8ea",
+                    "primary": "#00685d",
+                    "outline": "#6d7a77",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-bright": "#f8f9fb",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#d8dadc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "3xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+        body { font-family: 'Inter', sans-serif; font-size: 14px; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e0e3e5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed overflow-hidden h-screen">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant/30 flex flex-col py-8 px-5 space-y-6 bg-surface-container-lowest z-50">
+<div class="flex items-center gap-2.5 px-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+<div>
+<h1 class="font-['Manrope'] font-extrabold text-lg text-primary tracking-tight leading-none">MedCurator</h1>
+<p class="text-[10px] font-medium text-on-surface-variant opacity-60">ADMIN CONSOLE</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col space-y-1">
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-primary bg-primary/5 font-semibold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Staff Directory</span>
+</a>
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined">event_busy</span>
+<span class="font-medium">Leaves</span>
+</a>
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-medium">Schedules</span>
+</a>
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium">Analytics</span>
+</a>
+</nav>
+<div class="space-y-1 pt-6 border-t border-outline-variant/20">
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 py-2.5 px-3 rounded-lg text-error/80 hover:bg-error-container/20 transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-medium">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Header Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 flex items-center justify-between px-10 bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 z-40">
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant/30 rounded-lg focus:ring-1 focus:ring-primary/40 focus:border-primary text-sm placeholder:text-outline-variant/60" placeholder="Search staff or records..." type="text"/>
+</div>
+<div class="flex items-center gap-5">
+<div class="flex items-center gap-2">
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-lg relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-error rounded-full"></span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-lg">
+<span class="material-symbols-outlined">mail</span>
+</button>
+</div>
+<div class="flex items-center gap-3 pl-5 border-l border-outline-variant/20">
+<div class="text-right">
+<p class="text-xs font-bold leading-none">Admin Sarah</p>
+<p class="text-[9px] text-on-surface-variant/60 font-medium uppercase tracking-tighter">Super Admin</p>
+</div>
+<img alt="Admin Avatar" class="w-8 h-8 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDK0xPzUJJ8ZdcAlNMgSnFZ1Og3AZlXdxBg47Hs3ID7lmyXWyY3VQ68dd2kIz61rQNsnvOTFEE_7oohZorDFUzuq2Pz5quD2NkPFx0T3FmsVXQ_Ju_zJagC22m2fUXwTMTvR5nETkzBGQTNS6asmviufomdkOHQ2k2MUeG50LQXcMeL9XyY-BxOXjWNpFOYrlzjeNImixCM3qskDwN-mT_RKP85TIfdyAQo74AHVQAqhXBxn5cJhCai46U6p7xwl97ggX1JTqyw4YI"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-16 h-screen flex">
+<!-- Middle Column: Compact Personnel List -->
+<section class="w-80 flex flex-col bg-surface border-r border-outline-variant/20">
+<div class="p-6 border-b border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-lg font-extrabold tracking-tight font-headline">Personnel</h2>
+<span class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant rounded text-[10px] font-bold">128</span>
+</div>
+<button class="w-full flex items-center justify-center gap-2 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add New</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
+<!-- Item 1 (Selected) -->
+<div class="p-3 bg-primary/5 rounded-xl border border-primary/20 shadow-sm cursor-pointer group">
+<div class="flex gap-3 items-center">
+<img alt="Doctor" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMhmOg1Hc0D2fMaSpeUKL69wbJcNaleWqpLXcziYIDay-A4p7j6fbGpSvux7IRgVgC7UEu05ATGwkHj3Ge5KIgIGQU76MEw8V3YGm9DLsct9nnugzHKOC3KmGY3efDmOivf3MvenTTSUq2MIx0c50M33fhKUkUYGBIXz9Q0xbCpKKy1sVKlNT38y2Qw-UNL5lWxLRzqe9LUazYfvJv8fAbp6zo6NsUKXYmHfJyvCrPGzU2VOgFcLojovCFc67tqp2Ok3Mw99RFSLo"/>
+<div class="min-w-0">
+<h3 class="font-bold text-sm truncate">DT. ABDULKERIM SEKER</h3>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wide">Campus A</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Other Items (Compact) -->
+<div class="p-3 hover:bg-surface-container-low rounded-xl cursor-pointer group transition-colors">
+<div class="flex gap-3 items-center">
+<img alt="Doctor" class="w-10 h-10 rounded-lg object-cover opacity-80 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbt8P87J7CEcg6iqAY1iuVzJq6Cl4UlJRpetepPYbYGRRkQ2sbVD0yfVy4TSovsU7dw_HbALDeD0mlj2SS4bhGaOurOnc-CNOWFMjC7-u0m4COzIGakVK7atiTZm3nDwr6VtP8AnwpWDA7KZTrHANgwbPMRu-IE_NSFKD9AMrNgymgzVSUOmCBezNxDi7jRR0i1li4hHZ2KAXA6L6zN7mESB25WVAuwxEqBr6c3h9u4cQPGptTF4aFpGPs3Spbjf31U_ltispqH_U"/>
+<div class="min-w-0">
+<h3 class="font-bold text-sm text-on-surface-variant group-hover:text-on-surface truncate">DT. ELIF YILMAZ</h3>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container"></span>
+<span class="text-[10px] font-medium text-on-surface-variant/60 uppercase tracking-wide">Campus B</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-3 hover:bg-surface-container-low rounded-xl cursor-pointer group transition-colors">
+<div class="flex gap-3 items-center">
+<img alt="Doctor" class="w-10 h-10 rounded-lg object-cover opacity-80 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCys4auI63McX8y_K4ADMFf5tkW3Ey7BwsZErresN0S5IYhWAvbkB2WebyR1gT2a4uJY8f4TufiP8xdbEFYv-fYzWGIAn7i2IH7RU4UwhuAQSfzPQu4aK4-OpC9D75FCw90Gmbfs8b5ZPkIDQwyGX9avPQfMjLwPOGZos-p4y-1KqWfcpyx0_n5KEG_YJeCGJqBBjnEdubslbgCT-8VpgYA7jPqLOM2hjFyvq0fXRhVIAwoAkKRfZ5RcCswPZNDq34ovDFaa1fseFY"/>
+<div class="min-w-0">
+<h3 class="font-bold text-sm text-on-surface-variant group-hover:text-on-surface truncate">DT. MURAT CAN</h3>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="text-[10px] font-medium text-on-surface-variant/60 uppercase tracking-wide">Campus A</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-3 hover:bg-surface-container-low rounded-xl cursor-pointer group transition-colors">
+<div class="flex gap-3 items-center">
+<img alt="Doctor" class="w-10 h-10 rounded-lg object-cover opacity-80 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBOQOmPodJhe_CSqymIEBLyUDe92K_inxuKbhSiRZrwLzcOn7ouKKj9RLIPWKU7k6-aStD83DdRXZjXuQNO-TrRaw49kjwGRgBZag77aahiOveSWFWY8_TGf32V3pJuBAREBCSVWmt4JhS1XWjUCYswVj-7SPGGv8V_S_8cFvvQ9cZANLIX0QbA8fFs0LHJtSWKq4jgohuJznhUwNV2PKXui40nRhbNnyfWz5osV1DZ8B4wpygMuY4ddxMlAsKflq05jFva0rPNXw"/>
+<div class="min-w-0">
+<h3 class="font-bold text-sm text-on-surface-variant group-hover:text-on-surface truncate">DT. SELIN AKSOY</h3>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-error/40"></span>
+<span class="text-[10px] font-medium text-on-surface-variant/60 uppercase tracking-wide">Main HQ</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Main Area: Redesigned Detailed View -->
+<section class="flex-1 overflow-y-auto custom-scrollbar p-8 bg-surface-container-lowest">
+<!-- Compact Profile Header -->
+<div class="flex items-center justify-between mb-8 pb-8 border-b border-outline-variant/10">
+<div class="flex items-center gap-6">
+<div class="relative">
+<img alt="Doctor" class="w-20 h-20 rounded-2xl object-cover ring-4 ring-surface shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_dncUgdj7xSsFfosWjstdzfMC1yZSxGHUzu8wcVGeRpFu6RTfFaTE6-XWo-Q8bwP59vDN-0UNQmhBRNdSy3fszTjUskq_l3kSwWzZo32_x8Qx9-_SRgsUE2kzBedq29rBztSOCnnIIt3QI7mFCAEGRgTR9F6DaeSrGVPvVMKO9PagCuOilhfHn3Q9lKZo-ksg2aARKJU3OqU4B8IMdsnAfSl9pwYJRy6hoksUSMT4pQZTzrmLqckSReP5vKp_3WocyBIrxEvVxU0"/>
+<div class="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white border-2 border-surface">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="text-2xl font-extrabold tracking-tight font-headline">DT. ABDULKERIM SEKER</h2>
+<span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant/70 text-xs font-medium">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[16px]">location_on</span>
+                                Campus A • Central Surgical Unit
+                            </div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[16px]">event</span>
+                                Since Oct 2021
+                            </div>
+</div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 border border-outline-variant/50 hover:bg-surface-container rounded-lg text-xs font-bold transition-all">Edit Info</button>
+<button class="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg text-xs font-bold shadow-sm transition-all">Actions</button>
+</div>
+</div>
+<!-- Redesigned Multi-Column Grid for Metrics -->
+<div class="grid grid-cols-4 gap-4 mb-8">
+<!-- Group Type -->
+<div class="p-5 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10 group">
+<p class="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-3">Work Group</p>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined">calendar_view_week</span>
+</div>
+<div>
+<h4 class="text-lg font-bold leading-none">Weekday</h4>
+<p class="text-[10px] text-primary font-bold mt-1 uppercase">Primary Cluster</p>
+</div>
+</div>
+</div>
+<!-- Team Status -->
+<div class="p-5 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10 group">
+<p class="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-3">Operator Mode</p>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<h4 class="text-lg font-bold leading-none">Single</h4>
+<p class="text-[10px] text-on-surface-variant/60 font-bold mt-1 uppercase">Independent</p>
+</div>
+</div>
+</div>
+<!-- Yearly Performance Score (Compact) -->
+<div class="col-span-2 p-5 bg-gradient-to-br from-[#00685d] to-[#008376] text-white rounded-2xl shadow-sm overflow-hidden relative">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Annual Performance</p>
+<div class="flex items-baseline gap-1.5">
+<h4 class="text-3xl font-extrabold font-headline leading-none">12.4</h4>
+<span class="text-xs font-bold opacity-60">/ 15</span>
+</div>
+</div>
+<div class="text-right">
+<span class="px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold">+2.4%</span>
+</div>
+</div>
+<div class="mt-4 h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+<div class="h-full bg-white rounded-full" style="width: 82%"></div>
+</div>
+</div>
+</div>
+<!-- Compact Analytics Section -->
+<div class="bg-surface rounded-3xl border border-outline-variant/20 p-6 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Shift Analytics Summary</h3>
+<div class="flex bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/20">
+<button class="px-3 py-1 rounded-md text-[11px] font-bold">Monthly</button>
+<button class="px-3 py-1 bg-white rounded-md text-[11px] font-extrabold shadow-sm">Annual</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 mb-8">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">clinical_notes</span>
+</div>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase">Total Shifts</p>
+<h5 class="text-xl font-extrabold font-headline">248</h5>
+</div>
+</div>
+<div class="flex items-center gap-4 border-l border-outline-variant/20 pl-6">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed/30 flex items-center justify-center text-on-secondary-fixed-variant">
+<span class="material-symbols-outlined">dark_mode</span>
+</div>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase">Night Shifts</p>
+<h5 class="text-xl font-extrabold font-headline">42</h5>
+</div>
+</div>
+<div class="flex items-center gap-4 border-l border-outline-variant/20 pl-6">
+<div class="w-12 h-12 rounded-xl bg-error-container/30 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">holiday_village</span>
+</div>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase">Holiday</p>
+<h5 class="text-xl font-extrabold font-headline">14</h5>
+</div>
+</div>
+</div>
+<!-- Minimal Data Visualizer -->
+<div class="h-24 w-full flex items-end gap-2 px-2">
+<div class="flex-1 bg-surface-container-high rounded-t h-[30%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[45%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[40%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary rounded-t h-[85%] transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[60%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[35%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[50%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[70%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[25%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[45%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[65%] hover:bg-primary transition-all cursor-pointer"></div>
+<div class="flex-1 bg-surface-container-high rounded-t h-[55%] hover:bg-primary transition-all cursor-pointer"></div>
+</div>
+<div class="flex justify-between mt-3 px-2 text-[9px] font-bold text-on-surface-variant/30 uppercase tracking-[0.2em]">
+<span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+</div>
+</div>
+</section>
+</main>
+</body></html>
