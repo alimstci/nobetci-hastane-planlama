@@ -75,7 +75,7 @@ export function AddDoctorDialog() {
           <div className="space-y-2">
             <Label htmlFor="groupType">Grup</Label>
             <Select 
-              onValueChange={(value) => setValue('groupType', value as any)}
+              onValueChange={(value) => value && setValue('groupType', value as any)}
               defaultValue="normal"
             >
               <SelectTrigger>

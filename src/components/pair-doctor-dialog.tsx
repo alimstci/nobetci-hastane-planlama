@@ -74,7 +74,7 @@ export function PairDoctorDialog({ doctors }: PairDoctorDialogProps) {
         <div className="space-y-6 py-4">
           <div className="space-y-2">
             <Label>1. Doktor</Label>
-            <Select onValueChange={setDoctor1} value={doctor1}>
+            <Select onValueChange={(val) => val && setDoctor1(val)} value={doctor1}>
               <SelectTrigger>
                 <SelectValue placeholder="Doktor seçin" />
               </SelectTrigger>
@@ -92,7 +92,7 @@ export function PairDoctorDialog({ doctors }: PairDoctorDialogProps) {
 
           <div className="space-y-2">
             <Label>2. Doktor</Label>
-            <Select onValueChange={setDoctor2} value={doctor2}>
+            <Select onValueChange={(val) => val && setDoctor2(val)} value={doctor2}>
               <SelectTrigger>
                 <SelectValue placeholder="Doktor seçin" />
               </SelectTrigger>

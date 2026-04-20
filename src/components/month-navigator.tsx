@@ -41,8 +41,8 @@ export function MonthNavigator({ currentMonth }: MonthNavigatorProps) {
     router.push(`/admin/plans/${format(nextDate, 'yyyy-MM')}`);
   };
 
-  const handleMonthSelect = (value: string) => {
-    router.push(`/admin/plans/${value}`);
+  const handleMonthSelect = (value: string | null) => {
+    if (value) router.push(`/admin/plans/${value}`);
   };
 
   // Generate some months for the select dropdown (e.g. current year +/- 1)
