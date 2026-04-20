@@ -68,8 +68,8 @@ export function ManageEkuriDialog({ doctors }: ManageEkuriDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="outline" className="font-semibold shadow-sm border-slate-200 dark:border-white/10">
-            <Users className="mr-2 h-4 w-4 text-primary" /> Eküri Yönetimi
+          <Button variant="outline" size="sm" className="font-semibold shadow-sm border-slate-200 dark:border-white/10 h-10 px-3">
+            <Users className="mr-2 h-3.5 w-3.5 text-primary" /> Eküriler
           </Button>
         }
       />

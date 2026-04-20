@@ -72,19 +72,19 @@ export function DoctorsClient({ initialDoctors }: Props) {
       
       {/* LEFT COLUMN: Search and List */}
       <div className="lg:w-[380px] flex flex-col gap-6">
-        <div className="flex items-end justify-between px-1">
-          <div className="space-y-1">
+        <div className="space-y-4 px-1">
+          <div className="flex items-center justify-between gap-4">
             <h2 className="text-3xl font-black text-gradient uppercase tracking-tighter">
               Personel
             </h2>
-            <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-              Toplam {initialDoctors?.length} Kayıtlı
-            </p>
+            <div className="flex items-center gap-2">
+              <ManageEkuriDialog doctors={initialDoctors} />
+              <AddDoctorDialog />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ManageEkuriDialog doctors={initialDoctors} />
-            <AddDoctorDialog />
-          </div>
+          <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] opacity-60">
+            Sistemde {initialDoctors?.length} Kayıtlı Personel
+          </p>
         </div>
 
         <div className="relative group">

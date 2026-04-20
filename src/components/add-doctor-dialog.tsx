@@ -56,8 +56,8 @@ export function AddDoctorDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button className="font-semibold shadow-lg hover:shadow-xl transition-all">
-            <PlusCircle className="mr-2 h-4 w-4" /> Yeni Doktor
+          <Button size="sm" className="font-semibold shadow-lg hover:shadow-xl transition-all h-10 px-4">
+            <PlusCircle className="mr-2 h-3.5 w-3.5" /> Yeni
           </Button>
         }
       />
