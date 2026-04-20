@@ -80,7 +80,7 @@ export function PairDoctorDialog({ doctors }: PairDoctorDialogProps) {
               </SelectTrigger>
               <SelectContent>
                 {availableDoctors.map(d => (
-                  <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
+                  <SelectItem key={d.id} value={d.id} textValue={d.full_name}>{d.full_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -98,7 +98,7 @@ export function PairDoctorDialog({ doctors }: PairDoctorDialogProps) {
               </SelectTrigger>
               <SelectContent>
                 {availableDoctors.filter(d => d.id !== doctor1).map(d => (
-                  <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
+                  <SelectItem key={d.id} value={d.id} textValue={d.full_name}>{d.full_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

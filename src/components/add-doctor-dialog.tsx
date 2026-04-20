@@ -82,8 +82,8 @@ export function AddDoctorDialog() {
                 <SelectValue placeholder="Grup seçin" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="normal">Normal Grup</SelectItem>
-                <SelectItem value="weekend">Hafta Sonu Grubu</SelectItem>
+                <SelectItem value="normal" textValue="Normal Grup">Normal Grup</SelectItem>
+                <SelectItem value="weekend" textValue="Hafta Sonu Grubu">Hafta Sonu Grubu</SelectItem>
               </SelectContent>
             </Select>
           </div>
