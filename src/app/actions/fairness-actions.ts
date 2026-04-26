@@ -3,11 +3,15 @@
 import { supabase } from '@/lib/supabase';
 
 type FairnessRow = {
+  doctor_id: string;
   total_day_shifts?: number | null;
   holiday_count?: number | null;
   doctor?: {
+    full_name?: string | null;
+    group_type?: string | null;
     night_debt?: { total_night_shifts_year?: number | null }[] | { total_night_shifts_year?: number | null } | null;
   } | null;
+  [key: string]: unknown;
 };
 
 export async function getFairnessStats(year: number) {

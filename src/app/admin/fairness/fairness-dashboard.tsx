@@ -62,11 +62,13 @@ type ShiftHistoryRow = {
   shift_type: string;
 };
 
+type WeekdayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
+
 interface Props {
   stats: FairnessRow[];
 }
 
-function getGroupLabel(groupType?: string) {
+function getGroupLabel(groupType?: string | null) {
   if (groupType === 'weekend') return 'Hafta Sonu Grubu';
   if (groupType === 'night_only') return 'Sadece Gece';
   return 'Normal Kadro';
@@ -89,7 +91,7 @@ function normalizeFairnessRow(row: FairnessRow) {
   };
 }
 
-function getNumericValue(row: FairnessRow, key: string) {
+function getNumericValue(row: FairnessRow, key: WeekdayKey) {
   return Number(row[key] || 0);
 }
 
@@ -107,7 +109,7 @@ export default function FairnessDashboard({ stats }: Props) {
   }, [normalizedStats, searchTerm]);
 
   const globalDayStats = useMemo(() => {
-    const days = [
+    const days: { name: string; key: WeekdayKey; label: string }[] = [
       { name: 'Pzt', key: 'monday', label: 'Pazartesi' },
       { name: 'Sal', key: 'tuesday', label: 'Salı' },
       { name: 'Çar', key: 'wednesday', label: 'Çarşamba' },
@@ -343,7 +345,7 @@ export default function FairnessDashboard({ stats }: Props) {
                                 <PolarGrid stroke="rgba(148, 163, 184, 0.1)" />
                                 <PolarAngleAxis dataKey="day" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }} />
                                 <Radar 
-                                  name={row.doctor?.full_name} 
+                                  name={row.doctor?.full_name || undefined} 
                                   dataKey="val" 
                                   stroke="var(--primary)" 
                                   fill="var(--primary)" 
@@ -354,13 +356,13 @@ export default function FairnessDashboard({ stats }: Props) {
                           </div>
 
                           <div className="grid grid-cols-5 gap-2 px-2">
-                            {[
+                            {([
                               { l: 'PZT', k: 'monday' },
                               { l: 'SAL', k: 'tuesday' },
                               { l: 'ÇAR', k: 'wednesday' },
                               { l: 'PER', k: 'thursday' },
                               { l: 'CUM', k: 'friday' }
-                            ].map(day => (
+                            ] as { l: string; k: WeekdayKey }[]).map(day => (
                               <div key={day.k} className="text-center">
                                 <p className={cn(
                                   "text-[8px] font-black tracking-widest uppercase transition-colors mb-1",
