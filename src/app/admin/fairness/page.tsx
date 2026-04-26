@@ -8,7 +8,7 @@ export default async function FairnessPage() {
   const stats = await getFairnessStats(currentYear);
 
   // Global Analitik Metrikler (Tüm doktorlar için sabittir)
-  const totalAssignments = stats.reduce((sum, s) => sum + s.total_day_shifts + (s.doctor?.night_debt?.[0]?.debt_points || 0), 0);
+  const totalAssignments = stats.reduce((sum, s) => sum + (s.total_shifts || 0), 0);
   const avgLoad = stats.length > 0 ? (totalAssignments / stats.length).toFixed(1) : "0";
 
   return (

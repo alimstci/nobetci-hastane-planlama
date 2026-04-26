@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { getDoctorShiftHistory } from '@/app/actions/fairness-actions';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,6 @@ import {
   ChevronDown, 
   ChevronUp, 
   BarChart3, 
-  Scale, 
   Info,
   Activity,
   History,
@@ -35,8 +34,63 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type NightDebt = { total_night_shifts_year?: number | null };
+
+type FairnessRow = {
+  doctor_id: string;
+  doctor?: {
+    full_name?: string | null;
+    group_type?: string | null;
+    night_debt?: NightDebt[] | NightDebt | null;
+  } | null;
+  total_day_shifts?: number | null;
+  total_night_shifts?: number | null;
+  holiday_count?: number | null;
+  holiday_shifts?: number | null;
+  total_shifts?: number | null;
+  monday?: number | null;
+  tuesday?: number | null;
+  wednesday?: number | null;
+  thursday?: number | null;
+  friday?: number | null;
+  [key: string]: unknown;
+};
+
+type ShiftHistoryRow = {
+  id: string;
+  date: string;
+  shift_type: string;
+};
+
 interface Props {
-  stats: any[];
+  stats: FairnessRow[];
+}
+
+function getGroupLabel(groupType?: string) {
+  if (groupType === 'weekend') return 'Hafta Sonu Grubu';
+  if (groupType === 'night_only') return 'Sadece Gece';
+  return 'Normal Kadro';
+}
+
+function normalizeFairnessRow(row: FairnessRow) {
+  const nightDebt = Array.isArray(row.doctor?.night_debt)
+    ? row.doctor.night_debt[0]
+    : row.doctor?.night_debt;
+  const totalDayShifts = Number(row.total_day_shifts || 0);
+  const totalNightShifts = Number(row.total_night_shifts ?? nightDebt?.total_night_shifts_year ?? 0);
+  const holidayShifts = Number(row.holiday_shifts ?? row.holiday_count ?? 0);
+
+  return {
+    ...row,
+    total_day_shifts: totalDayShifts,
+    total_night_shifts: totalNightShifts,
+    holiday_shifts: holidayShifts,
+    total_shifts: Number(row.total_shifts ?? totalDayShifts + totalNightShifts),
+  };
+}
+
+function getNumericValue(row: FairnessRow, key: string) {
+  return Number(row[key] || 0);
 }
 
 export default function FairnessDashboard({ stats }: Props) {
@@ -44,11 +98,13 @@ export default function FairnessDashboard({ stats }: Props) {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const normalizedStats = useMemo(() => stats.map(normalizeFairnessRow), [stats]);
+
   const filteredStats = useMemo(() => {
-    return stats.filter(s => 
+    return normalizedStats.filter(s => 
       s.doctor?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [stats, searchTerm]);
+  }, [normalizedStats, searchTerm]);
 
   const globalDayStats = useMemo(() => {
     const days = [
@@ -62,9 +118,9 @@ export default function FairnessDashboard({ stats }: Props) {
     return days.map(d => ({
       name: d.name,
       label: d.label,
-      value: stats.reduce((sum, s) => sum + (s[d.key] || 0), 0)
+      value: normalizedStats.reduce((sum, s) => sum + Number(s[d.key] || 0), 0)
     }));
-  }, [stats]);
+  }, [normalizedStats]);
 
   const maxGlobalValue = Math.max(...globalDayStats.map(d => d.value), 1);
 
@@ -226,7 +282,7 @@ export default function FairnessDashboard({ stats }: Props) {
                         {row.doctor?.full_name}
                       </h3>
                       <Badge variant="outline" className="mt-1.5 bg-slate-100/50 dark:bg-white/5 text-xs">
-                        {row.doctor?.group_type === 'normal' ? 'Normal Kadro' : 'Hafta Sonu'}
+                        {getGroupLabel(row.doctor?.group_type)}
                       </Badge>
                     </div>
                     <button 
@@ -241,18 +297,22 @@ export default function FairnessDashboard({ stats }: Props) {
                   </div>
 
                   {/* Stat Summary Row */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-slate-50/50 dark:bg-white/5 rounded-2xl p-4 text-center group/stat">
+                  <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+                    <div className="bg-slate-50/80 dark:bg-white/5 rounded-lg p-3 text-center group/stat">
+                      <p className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-1 group-hover/stat:text-primary transition-colors">Gündüz</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white">{row.total_day_shifts}</p>
+                    </div>
+                    <div className="bg-slate-50/80 dark:bg-white/5 rounded-lg p-3 text-center group/stat">
                       <p className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-1 group-hover/stat:text-primary transition-colors">Gece</p>
-                      <p className="text-2xl font-black text-slate-900 dark:text-white">{row.total_night_shifts}</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white">{row.total_night_shifts}</p>
                     </div>
-                    <div className="bg-slate-50/50 dark:bg-white/5 rounded-2xl p-4 text-center group/stat">
-                      <p className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-1 group-hover/stat:text-primary transition-colors">Hafta Sonu</p>
-                      <p className="text-2xl font-black text-slate-900 dark:text-white">{row.holiday_count}</p>
+                    <div className="bg-slate-50/80 dark:bg-white/5 rounded-lg p-3 text-center group/stat">
+                      <p className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-1 group-hover/stat:text-primary transition-colors">Tatil</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white">{row.holiday_shifts}</p>
                     </div>
-                    <div className="bg-primary/10 dark:bg-primary/20 rounded-2xl p-4 text-center">
+                    <div className="bg-primary/10 dark:bg-primary/20 rounded-lg p-3 text-center">
                       <p className="text-[9px] font-bold text-primary uppercase tracking-wide mb-1">Toplam</p>
-                      <p className="text-2xl font-black text-primary">{row.total_day_shifts + row.total_night_shifts}</p>
+                      <p className="text-xl font-black text-primary">{row.total_shifts}</p>
                     </div>
                   </div>
 
@@ -274,11 +334,11 @@ export default function FairnessDashboard({ stats }: Props) {
                           <div className="h-[220px] w-full flex items-center justify-center bg-slate-50/50 dark:bg-white/5 rounded-[2rem] overflow-hidden">
                             <ResponsiveContainer width="100%" height="100%">
                               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={[
-                                { day: 'Pzt', val: row.monday },
-                                { day: 'Sal', val: row.tuesday },
-                                { day: 'Çar', val: row.wednesday },
-                                { day: 'Per', val: row.thursday },
-                                { day: 'Cum', val: row.friday },
+                                { day: 'Pzt', val: row.monday || 0 },
+                                { day: 'Sal', val: row.tuesday || 0 },
+                                { day: 'Çar', val: row.wednesday || 0 },
+                                { day: 'Per', val: row.thursday || 0 },
+                                { day: 'Cum', val: row.friday || 0 },
                               ]}>
                                 <PolarGrid stroke="rgba(148, 163, 184, 0.1)" />
                                 <PolarAngleAxis dataKey="day" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }} />
@@ -304,12 +364,12 @@ export default function FairnessDashboard({ stats }: Props) {
                               <div key={day.k} className="text-center">
                                 <p className={cn(
                                   "text-[8px] font-black tracking-widest uppercase transition-colors mb-1",
-                                  row[day.k] > 0 ? "text-primary" : "text-slate-400"
+                                  getNumericValue(row, day.k) > 0 ? "text-primary" : "text-slate-400"
                                 )}>{day.l}</p>
                                 <p className={cn(
                                   "text-sm font-black transition-colors",
-                                  row[day.k] > 0 ? "text-slate-900 dark:text-white" : "text-slate-300 dark:text-slate-700"
-                                )}>{row[day.k] || 0}</p>
+                                  getNumericValue(row, day.k) > 0 ? "text-slate-900 dark:text-white" : "text-slate-300 dark:text-slate-700"
+                                )}>{getNumericValue(row, day.k)}</p>
                               </div>
                             ))}
                           </div>
@@ -348,7 +408,7 @@ export default function FairnessDashboard({ stats }: Props) {
           </div>
           <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Personel Kaydı Bulunamadı</h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wide max-w-xs mx-auto mt-4">
-            "{searchTerm}" kriterine uygun bir adalet verisi bulunmuyor.
+            &quot;{searchTerm}&quot; kriterine uygun bir adalet verisi bulunmuyor.
           </p>
         </motion.div>
       )}
@@ -357,7 +417,7 @@ export default function FairnessDashboard({ stats }: Props) {
 }
 
 function HistoryList({ doctorId }: { doctorId: string }) {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<ShiftHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
