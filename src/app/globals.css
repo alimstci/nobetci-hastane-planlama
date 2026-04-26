@@ -40,26 +40,26 @@
 }
 
 :root {
-  --background: oklch(0.975 0.004 240);
+  --background: oklch(0.93 0.015 205);
   --foreground: oklch(0.18 0.018 250);
   
   --primary: oklch(0.48 0.11 190);
   --primary-foreground: oklch(1 0 0);
   
-  --secondary: oklch(0.94 0.008 240);
+  --secondary: oklch(0.90 0.018 205);
   --secondary-foreground: oklch(0.22 0.018 250);
   
   --accent: oklch(0.62 0.10 160);
   --accent-foreground: oklch(0.18 0.018 250);
   
-  --muted: oklch(0.94 0.006 240);
+  --muted: oklch(0.90 0.014 205);
   --muted-foreground: oklch(0.43 0.025 250);
   
   --border: oklch(0.88 0.008 240);
   --input: oklch(0.88 0.008 240);
   --ring: oklch(0.48 0.11 190 / 0.35);
   
-  --card: oklch(1 0 0);
+  --card: oklch(0.985 0.004 210);
   --card-foreground: oklch(0.18 0.018 250);
   
   --destructive: oklch(0.60 0.20 20);
@@ -100,12 +100,17 @@
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary overflow-x-hidden;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  main {
+    background:
+      linear-gradient(180deg, oklch(0.96 0.012 205), oklch(0.91 0.018 205));
+  }
 }
 
 /* --- Premium Aurora Utilities --- */
 
 .glass-card {
-  @apply bg-card border border-slate-200 dark:border-white/10 shadow-sm;
+  @apply bg-card border border-slate-300/70 dark:border-white/10 shadow-sm;
   box-shadow: none;
 }
 

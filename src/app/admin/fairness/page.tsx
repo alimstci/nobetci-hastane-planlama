@@ -12,18 +12,18 @@ export default async function FairnessPage() {
   const avgLoad = stats.length > 0 ? (totalAssignments / stats.length).toFixed(1) : "0";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-6 md:py-12 px-4 md:px-6">
-      <div className="max-w-6xl mx-auto space-y-12">
+    <div className="py-6 px-4 md:px-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         {/* 1. Page Header */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-teal-600 flex items-center justify-center text-white shadow-lg shadow-teal-200">
+            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center text-white">
               <BarChart3 className="h-7 w-7" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight uppercase">Hakkaniyet Raporu</h1>
-              <p className="text-xs md:text-sm text-slate-500 font-black uppercase tracking-[0.2em] mt-1 opacity-70">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-950 tracking-tight">Hakkaniyet Raporu</h1>
+              <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">
                 2026 Yılı Mutlak Adalet ve Yük Analizi
               </p>
             </div>
@@ -32,10 +32,10 @@ export default async function FairnessPage() {
 
         {/* 2. Top Level Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="border-none bg-white shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all duration-300 group">
-            <CardContent className="p-8 flex items-center gap-6">
-              <div className="h-16 w-16 rounded-2xl bg-teal-50 flex items-center justify-center group-hover:bg-teal-600 transition-colors duration-500">
-                <Users className="h-8 w-8 text-teal-600 group-hover:text-white transition-colors duration-500" />
+          <Card className="border border-slate-300/70 bg-card shadow-sm group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ortalama Yıl Sonu Yükü</p>
@@ -47,10 +47,10 @@ export default async function FairnessPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-none bg-white shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all duration-300 group">
-            <CardContent className="p-8 flex items-center gap-6">
-              <div className="h-16 w-16 rounded-2xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-600 transition-colors duration-500">
-                <TrendingDown className="h-8 w-8 text-emerald-600 group-hover:text-white transition-colors duration-500" />
+          <Card className="border border-slate-300/70 bg-card shadow-sm group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <TrendingDown className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Adalet Katsayısı</p>
@@ -62,10 +62,10 @@ export default async function FairnessPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-none bg-white shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all duration-300 group sm:col-span-2 lg:col-span-1">
-            <CardContent className="p-8 flex items-center gap-6">
-              <div className="h-16 w-16 rounded-2xl bg-slate-900 flex items-center justify-center">
-                <Users className="h-8 w-8 text-white" />
+          <Card className="border border-slate-300/70 bg-card shadow-sm group sm:col-span-2 lg:col-span-1">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-lg bg-slate-900 flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Analiz Edilen Personel</p>

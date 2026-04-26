@@ -4,22 +4,10 @@ import { supabase } from '@/lib/supabase';
 import { Scheduler } from '@/lib/scheduler';
 import { revalidatePath } from 'next/cache';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-
-const TURKISH_HOLIDAYS_2026 = new Set([
-  '2026-01-01',
-  '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22',
-  '2026-04-23',
-  '2026-05-01',
-  '2026-05-19',
-  '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29', '2026-05-30',
-  '2026-07-15',
-  '2026-08-30',
-  '2026-10-28', '2026-10-29',
-]);
+import { isWeekendOrTurkishHoliday } from '@/lib/holidays';
 
 function isWeekendOrHoliday(date: string) {
-  const day = new Date(`${date}T00:00:00`).getDay();
-  return day === 0 || day === 6 || TURKISH_HOLIDAYS_2026.has(date);
+  return isWeekendOrTurkishHoliday(new Date(`${date}T00:00:00`));
 }
 
 function isAdjacentOrSameDay(left: string, right: string) {
@@ -27,6 +15,15 @@ function isAdjacentOrSameDay(left: string, right: string) {
   const rightTime = new Date(`${right}T00:00:00`).getTime();
   const dayDiff = Math.abs(Math.round((leftTime - rightTime) / (24 * 60 * 60 * 1000)));
   return dayDiff <= 1;
+}
+
+async function recalculateStats(year: number, planId?: string) {
+  const { error } = await supabase.rpc('recalculate_plan_stats', { p_year: year });
+  if (!error) return;
+  if (!planId) throw new Error(error.message);
+
+  const { error: fallbackError } = await supabase.rpc('recalculate_plan_stats', { p_plan_id: planId });
+  if (fallbackError) throw new Error(error.message);
 }
 
 export async function getMonthlyPlans(year: number) {
@@ -119,6 +116,13 @@ export async function generateAutoPlan(yearMonth: string) {
   if (!doctors || doctors.length === 0) throw new Error('Sistemde aktif doktor bulunamadı.');
   if (!plan) throw new Error('İlgili ay için plan kaydı bulunamadı.');
 
+  const { data: neighboringAssignments, error: neighboringError } = await supabase
+    .from('shift_assignments')
+    .select('doctor_id, date')
+    .neq('plan_id', plan.id);
+
+  if (neighboringError) throw new Error(neighboringError.message);
+
   const scheduler = new Scheduler({
     year,
     month,
@@ -126,7 +130,8 @@ export async function generateAutoPlan(yearMonth: string) {
     nightDebts: nightDebts || [],
     fairnessStats: fairnessStats || [],
     holidays: [], 
-    leaves: leaves || []
+    leaves: leaves || [],
+    externalAssignments: neighboringAssignments || []
   });
 
   const assignments = scheduler.generatePlan(plan.id);
@@ -138,13 +143,6 @@ export async function generateAutoPlan(yearMonth: string) {
 
   // 2. Clear old assignments (trigger çalışmaz - DELETE'de trigger yok)
   console.log('Eski nöbetler temizleniyor...');
-  const { data: neighboringAssignments, error: neighboringError } = await supabase
-    .from('shift_assignments')
-    .select('doctor_id, date')
-    .neq('plan_id', plan.id);
-
-  if (neighboringError) throw new Error(neighboringError.message);
-
   const boundaryConflict = assignments.find(assignment =>
     neighboringAssignments?.some(existing =>
       existing.doctor_id === assignment.doctor_id && isAdjacentOrSameDay(existing.date, assignment.date)
@@ -171,14 +169,7 @@ export async function generateAutoPlan(yearMonth: string) {
 
   // 4. Recalculate statistics (en sağlıklı yöntem)
   console.log('İstatistikler yeniden hesaplanıyor...');
-  const { error: recalcError } = await supabase.rpc('recalculate_plan_stats', {
-    p_year: year
-  });
-
-  if (recalcError) {
-    console.error('İstatistik Hesaplama Hatası:', recalcError.message);
-    throw new Error(recalcError.message);
-  }
+  await recalculateStats(year, plan.id);
 
   console.log('--- Plan Başarıyla Oluşturuldu ve İstatistikler Hesaplandı! ---');
   revalidatePath(`/admin/plans/${yearMonth}`);
@@ -219,7 +210,7 @@ export async function simulateYearlyPlan(year: number) {
     return { success: true };
   } catch (error: any) {
     console.error('Simülasyon Hatası:', error.message);
-    throw new Error(error.message);
+    return { success: false, error: error.message || 'Simülasyon tamamlanamadı.' };
   }
 }
 
@@ -296,7 +287,7 @@ export async function updateShiftAssignment(assignmentId: string, doctorId: stri
   if (updateError) throw new Error(updateError.message);
 
   const [year] = currentAssignment.plan.year_month.split('-').map(Number);
-  await supabase.rpc('recalculate_plan_stats', { p_year: year });
+  await recalculateStats(year, currentAssignment.plan_id);
   revalidatePath(`/admin/plans/${currentAssignment.plan.year_month}`);
   revalidatePath('/admin/fairness');
 }

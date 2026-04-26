@@ -1,6 +1,3 @@
-alter table doctors drop constraint if exists doctors_group_type_check;
-alter table doctors add constraint doctors_group_type_check check (group_type in ('normal', 'weekend', 'night_only'));
-
 create or replace function recalculate_plan_stats(p_year int)
 returns void as $$
 begin

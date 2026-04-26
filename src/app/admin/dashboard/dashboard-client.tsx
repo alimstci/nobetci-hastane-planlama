@@ -61,7 +61,10 @@ export function DashboardClient({
     const toastId = toast.loading('1 Yıllık Simülasyon çalıştırılıyor...');
     
     try {
-      await simulateYearlyPlan(2026);
+      const result = await simulateYearlyPlan(2026);
+      if (!result.success) {
+        throw new Error(result.error || 'Simülasyon tamamlanamadı.');
+      }
       toast.success('Simülasyon tamamlandı! Veriler güncellendi.', { id: toastId });
     } catch (error: any) {
       toast.error('Hata: ' + error.message, { id: toastId });

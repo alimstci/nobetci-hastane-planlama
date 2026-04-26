@@ -28,6 +28,7 @@ import {
 } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { isTurkishOfficialHoliday } from '@/lib/holidays';
 
 export default async function PlanPage({ params }: { params: Promise<{ month: string }> }) {
   const { month: yearMonth } = await params; 
@@ -124,6 +125,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                 const isCurrentMonth = format(day, 'yyyy-MM') === yearMonth;
                 const dayAssignments = assignments?.filter(a => a.date === dateStr);
                 const isWeekendDay = isWeekend(day);
+                const isOfficialHoliday = isTurkishOfficialHoliday(day);
                 const dayLeaves = leaves?.filter(l => dateStr >= l.start_date && dateStr <= l.end_date);
 
                 return (
@@ -137,10 +139,11 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                   >
                     <div className={cn(
                       "px-2.5 py-2 text-right flex justify-between items-center",
-                      isWeekendDay ? "text-rose-500" : "text-slate-400"
+                      (isWeekendDay || isOfficialHoliday) ? "text-rose-500" : "text-slate-400"
                     )}>
-                      {isWeekendDay && <span className="text-[8px] font-bold uppercase tracking-wide opacity-70">Hafta Sonu</span>}
-                      {!isWeekendDay && <span />}
+                      {isOfficialHoliday && <span className="text-[8px] font-bold uppercase tracking-wide opacity-80">Resmi Tatil</span>}
+                      {!isOfficialHoliday && isWeekendDay && <span className="text-[8px] font-bold uppercase tracking-wide opacity-70">Hafta Sonu</span>}
+                      {!isOfficialHoliday && !isWeekendDay && <span />}
                       <span className="font-bold text-sm">{format(day, 'd')}</span>
                     </div>
 

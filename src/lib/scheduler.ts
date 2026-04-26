@@ -3,12 +3,12 @@ import {
   eachDayOfInterval, 
   endOfMonth, 
   format, 
-  getDay, 
   isSameDay, 
   parseISO, 
   startOfMonth 
 } from 'date-fns';
 import { Doctor, NightDebt, ShiftAssignment, YearlyFairness } from './supabase';
+import { isWeekendOrTurkishHoliday } from './holidays';
 
 export interface SchedulerInput {
   year: number;
@@ -18,19 +18,8 @@ export interface SchedulerInput {
   fairnessStats: YearlyFairness[];
   holidays: string[]; // ISO date strings
   leaves: { doctor_id: string; start_date: string; end_date: string } [];
+  externalAssignments?: Pick<ShiftAssignment, 'doctor_id' | 'date'>[];
 }
-
-const TURKISH_HOLIDAYS_2026 = [
-  '2026-01-01',
-  '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22', 
-  '2026-04-23',
-  '2026-05-01',
-  '2026-05-19',
-  '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29', '2026-05-30',
-  '2026-07-15',
-  '2026-08-30',
-  '2026-10-28', '2026-10-29'
-];
 
 export class Scheduler {
   private assignments: ShiftAssignment[] = [];
@@ -48,7 +37,7 @@ export class Scheduler {
     this.fairnessMap = new Map(input.fairnessStats.map(f => [f.doctor_id, f]));
     
     // 2026 Türkiye tatillerini ve inputtan gelenleri birleştir
-    this.holidaysSet = new Set([...TURKISH_HOLIDAYS_2026, ...input.holidays]);
+    this.holidaysSet = new Set(input.holidays);
 
     // Başlangıç istatistiklerini kopyala
     this.localStats = new Map(input.doctors.map(d => {
@@ -80,9 +69,7 @@ export class Scheduler {
   }
 
   private isHoliday(date: Date): boolean {
-    const day = getDay(date);
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return day === 0 || day === 6 || this.holidaysSet.has(dateStr);
+    return isWeekendOrTurkishHoliday(date, [...this.holidaysSet]);
   }
 
   private isDoctorAvailable(doctorId: string, date: Date): boolean {
@@ -96,7 +83,8 @@ export class Scheduler {
     // Peş peşe nöbet yasağı
     // Peş peşe nöbet yasağı ve AYNI GÜN yasağı
     const forbiddenDates = [addDays(date, -1), date, addDays(date, 1)];
-    const hasConsecutive = this.assignments.some(a => 
+    const allAssignments = [...this.assignments, ...(this.input.externalAssignments || [])];
+    const hasConsecutive = allAssignments.some(a => 
       a.doctor_id === doctorId && 
       forbiddenDates.some(fd => isSameDay(parseISO(a.date), fd))
     );
