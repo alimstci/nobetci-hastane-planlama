@@ -27,6 +27,7 @@ export class Scheduler {
   private debtMap: Map<string, NightDebt>;
   private fairnessMap: Map<string, YearlyFairness>;
   private holidaysSet: Set<string>;
+  private monthlyDayCounts: Map<string, number> = new Map();
   
   // v2.2: Anlık yük takibi için yerel sayaçlar
   private localStats: Map<string, { total_day: number; holiday: number }>;
@@ -172,6 +173,7 @@ export class Scheduler {
 
   private assignWeekdayDayShifts(days: Date[], planId: string) {
     const normalDoctors = this.input.doctors.filter(d => d.group_type === 'normal');
+    const maxDayShiftsPerMonth = 2;
 
     for (const day of days) {
       if (this.isHoliday(day)) continue;
@@ -190,11 +192,13 @@ export class Scheduler {
       for (const doctor of candidates) {
         if (selectedForDay.length >= 3) break;
         if (selectedForDay.includes(doctor.id)) continue;
+        if (!this.canTakeWeekdayDayShift(doctor.id, maxDayShiftsPerMonth)) continue;
         if (!this.isDoctorAvailable(doctor.id, day)) continue;
 
         const partnerId = doctor.ekuri_pair_id ? this.findPartnerId(doctor) : null;
         const canTakePartner = partnerId && 
                                this.isDoctorAvailable(partnerId, day) && 
+                               this.canTakeWeekdayDayShift(partnerId, maxDayShiftsPerMonth) &&
                                selectedForDay.length <= 1 && 
                                !selectedForDay.includes(partnerId!);
 
@@ -226,6 +230,12 @@ export class Scheduler {
       stats.total_day++;
       if (isHoliday) stats.holiday++;
     }
+
+    this.monthlyDayCounts.set(doctorId, (this.monthlyDayCounts.get(doctorId) || 0) + 1);
+  }
+
+  private canTakeWeekdayDayShift(doctorId: string, maxDayShiftsPerMonth: number) {
+    return (this.monthlyDayCounts.get(doctorId) || 0) < maxDayShiftsPerMonth;
   }
 
   private findPartnerId(doctor: Doctor): string | null {

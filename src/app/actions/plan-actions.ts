@@ -5,6 +5,7 @@ import { Scheduler } from '@/lib/scheduler';
 import { revalidatePath } from 'next/cache';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { isWeekendOrTurkishHoliday } from '@/lib/holidays';
+import { Doctor } from '@/lib/supabase';
 
 function isWeekendOrHoliday(date: string) {
   return isWeekendOrTurkishHoliday(new Date(`${date}T00:00:00`));
@@ -24,6 +25,19 @@ async function recalculateStats(year: number, planId?: string) {
 
   const { error: fallbackError } = await supabase.rpc('recalculate_plan_stats', { p_plan_id: planId });
   if (fallbackError) throw new Error(error.message);
+}
+
+async function ensureNightDebtRows(doctors: { id: string }[]) {
+  if (doctors.length === 0) return;
+
+  const { error } = await supabase
+    .from('night_debt')
+    .upsert(
+      doctors.map(doctor => ({ doctor_id: doctor.id })),
+      { onConflict: 'doctor_id', ignoreDuplicates: true }
+    );
+
+  if (error) throw new Error(error.message);
 }
 
 export async function getMonthlyPlans(year: number) {
@@ -46,11 +60,13 @@ export async function getMonthlyPlans(year: number) {
 
 export async function getPlan(yearMonth: string) {
   // 1. Get or Create the plan record
-  let { data: plan, error: planError } = await supabase
+  const planResult = await supabase
     .from('monthly_plans')
     .select('*')
     .eq('year_month', yearMonth)
     .maybeSingle();
+  let plan = planResult.data;
+  const planError = planResult.error;
 
   if (planError) throw new Error(planError.message);
 
@@ -104,7 +120,6 @@ export async function generateAutoPlan(yearMonth: string) {
   
   // 1. Fetch all necessary data for scheduler
   const { data: doctors } = await supabase.from('doctors').select('*').eq('is_active', true);
-  const { data: nightDebts } = await supabase.from('night_debt').select('*');
   const { data: fairnessStats } = await supabase.from('yearly_fairness').select('*').eq('year', year);
   const { data: leaves } = await supabase.from('doctor_leaves').select('*');
   
@@ -123,10 +138,14 @@ export async function generateAutoPlan(yearMonth: string) {
 
   if (neighboringError) throw new Error(neighboringError.message);
 
+  await ensureNightDebtRows(doctors);
+  const { data: nightDebts, error: nightDebtError } = await supabase.from('night_debt').select('*');
+  if (nightDebtError) throw new Error(nightDebtError.message);
+
   const scheduler = new Scheduler({
     year,
     month,
-    doctors: doctors as any,
+    doctors: doctors as Doctor[],
     nightDebts: nightDebts || [],
     fairnessStats: fairnessStats || [],
     holidays: [], 
@@ -192,6 +211,11 @@ export async function simulateYearlyPlan(year: number) {
       await supabase.from('monthly_plans').delete().in('id', planIds);
     }
 
+    await supabase
+      .from('night_debt')
+      .update({ debt_points: 0, last_night_month: null, total_night_shifts_year: 0 })
+      .not('doctor_id', 'is', null);
+
     // 2. Ocak'tan Aralık'a kadar döngüye gir
     for (let month = 1; month <= 12; month++) {
       const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
@@ -208,9 +232,9 @@ export async function simulateYearlyPlan(year: number) {
     revalidatePath('/admin/dashboard');
     revalidatePath('/admin/fairness');
     return { success: true };
-  } catch (error: any) {
-    console.error('Simülasyon Hatası:', error.message);
-    return { success: false, error: error.message || 'Simülasyon tamamlanamadı.' };
+  } catch (error: unknown) {
+    console.error('Simulation error:', error instanceof Error ? error.message : 'Simulasyon tamamlanamadi.');
+    return { success: false, error: error instanceof Error ? error.message : 'Simulasyon tamamlanamadi.' };
   }
 }
 

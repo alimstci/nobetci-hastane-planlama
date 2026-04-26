@@ -29,13 +29,26 @@ export async function getFairnessStats(year: number) {
 
   if (error) throw error;
 
+  const { data: nightAssignments, error: nightError } = await supabase
+    .from('shift_assignments')
+    .select('doctor_id, plan:monthly_plans!inner(year_month)')
+    .eq('shift_type', 'gece')
+    .like('plan.year_month', `${year}-%`);
+
+  if (nightError) throw nightError;
+
+  const nightCounts = new Map<string, number>();
+  for (const assignment of nightAssignments || []) {
+    nightCounts.set(assignment.doctor_id, (nightCounts.get(assignment.doctor_id) || 0) + 1);
+  }
+
   return (data || [])
     .map((row: FairnessRow) => {
       const nightDebt = Array.isArray(row.doctor?.night_debt)
         ? row.doctor.night_debt[0]
         : row.doctor?.night_debt;
       const totalDayShifts = Number(row.total_day_shifts || 0);
-      const totalNightShifts = Number(nightDebt?.total_night_shifts_year || 0);
+      const totalNightShifts = nightCounts.get(row.doctor_id) ?? Number(nightDebt?.total_night_shifts_year || 0);
       const holidayShifts = Number(row.holiday_count || 0);
 
       return {
