@@ -14,7 +14,7 @@ create table ekuri_pairs (
 create table doctors (
   id uuid primary key default uuid_generate_v4(),
   full_name text not null unique,
-  group_type text check (group_type in ('normal', 'weekend')),
+  group_type text check (group_type in ('normal', 'weekend', 'night_only')),
   ekuri_pair_id uuid references ekuri_pairs(id) on delete set null,
   is_active boolean default true,
   created_at timestamptz default now()

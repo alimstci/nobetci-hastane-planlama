@@ -74,6 +74,8 @@ export class Scheduler {
     // 3. Gündüz Nöbetleri (Hafta İçi)
     this.assignWeekdayDayShifts(days, planId);
 
+    this.validateRestRules();
+
     return this.assignments;
   }
 
@@ -145,7 +147,7 @@ export class Scheduler {
   }
 
   private assignWeekendDayShifts(days: Date[], planId: string) {
-    const weekendDoctors = this.input.doctors.filter(d => d.group_type === 'weekend');
+    const weekendDoctors = this.input.doctors.filter(d => d.group_type === 'weekend' && this.findPartnerId(d));
 
     for (const day of days) {
       if (!this.isHoliday(day)) continue;
@@ -244,5 +246,30 @@ export class Scheduler {
       d.ekuri_pair_id === doctor.ekuri_pair_id && d.id !== doctor.id
     );
     return partner ? partner.id : null;
+  }
+
+  private validateRestRules() {
+    const byDoctor = new Map<string, ShiftAssignment[]>();
+
+    for (const assignment of this.assignments) {
+      const doctorAssignments = byDoctor.get(assignment.doctor_id) || [];
+      doctorAssignments.push(assignment);
+      byDoctor.set(assignment.doctor_id, doctorAssignments);
+    }
+
+    for (const [doctorId, assignments] of byDoctor) {
+      const sorted = assignments.sort((a, b) => a.date.localeCompare(b.date));
+
+      for (let i = 1; i < sorted.length; i++) {
+        const previous = parseISO(sorted[i - 1].date);
+        const current = parseISO(sorted[i].date);
+        const dayDiff = Math.round((current.getTime() - previous.getTime()) / (24 * 60 * 60 * 1000));
+
+        if (dayDiff <= 1) {
+          const doctorName = this.doctorMap.get(doctorId)?.full_name || doctorId;
+          throw new Error(`${doctorName} için peş peşe nöbet ihlali oluştu: ${sorted[i - 1].date} ve ${sorted[i].date}`);
+        }
+      }
+    }
   }
 }

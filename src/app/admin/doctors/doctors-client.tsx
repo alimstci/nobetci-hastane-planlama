@@ -25,7 +25,9 @@ import { AddDoctorDialog } from '@/components/add-doctor-dialog';
 import { PairDoctorDialog } from '@/components/pair-doctor-dialog';
 import { ManageLeavesDialog } from '@/components/manage-leaves-dialog';
 import { ManageEkuriDialog } from '@/components/manage-ekuri-dialog';
-import { getDetailedDoctorStats } from '@/app/actions/doctor-actions';
+import { EditDoctorDialog } from '@/components/edit-doctor-dialog';
+import { deleteDoctor, getDetailedDoctorStats, setDoctorActive } from '@/app/actions/doctor-actions';
+import { toast } from 'sonner';
 
 interface Props {
   initialDoctors: any[];
@@ -67,8 +69,38 @@ export function DoctorsClient({ initialDoctors }: Props) {
     return initialDoctors?.find(d => d.id === selectedId) || null;
   }, [initialDoctors, selectedId]);
 
+  const groupLabel = (groupType: string) => {
+    if (groupType === 'normal') return 'Hafta İçi';
+    if (groupType === 'weekend') return 'Hafta Sonu';
+    return 'Sadece Gece';
+  };
+
+  const handleToggleActive = async () => {
+    if (!selectedDoctor) return;
+    try {
+      await setDoctorActive(selectedDoctor.id, !selectedDoctor.is_active);
+      toast.success(selectedDoctor.is_active ? 'Doktor pasifleştirildi' : 'Doktor aktif edildi');
+    } catch (error: any) {
+      toast.error(error?.message || 'Durum güncellenemedi');
+    }
+  };
+
+  const handleDeleteDoctor = async () => {
+    if (!selectedDoctor) return;
+    const confirmed = window.confirm(`${selectedDoctor.full_name} kalıcı olarak silinsin mi? Geçmiş nöbet kayıtları da etkilenebilir.`);
+    if (!confirmed) return;
+
+    try {
+      await deleteDoctor(selectedDoctor.id);
+      toast.success('Doktor silindi');
+      setSelectedId(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'Doktor silinemedi');
+    }
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-8">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-6rem)] gap-6">
       
       {/* LEFT COLUMN: Search and List */}
       <div className="lg:w-[380px] flex flex-col gap-6">
@@ -93,7 +125,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
             placeholder="İSİMLE ARA..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-12 h-14 bg-white/50 dark:bg-white/5 border-none shadow-xl rounded-2xl text-[11px] font-black tracking-widest placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+            className="pl-12 h-11 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm rounded-md text-[11px] font-bold tracking-wide placeholder:text-slate-400 focus:ring-2 focus:ring-primary/10 outline-none"
           />
         </div>
 
@@ -108,10 +140,10 @@ export function DoctorsClient({ initialDoctors }: Props) {
                 key={doc.id}
                 onClick={() => setSelectedId(doc.id)}
                 className={cn(
-                  "w-full text-left p-4 rounded-2xl transition-all border flex items-center gap-4 group relative overflow-hidden",
+                  "w-full text-left p-3 rounded-md transition-colors border flex items-center gap-3 group relative overflow-hidden",
                   selectedId === doc.id 
-                    ? "bg-slate-900 border-primary shadow-2xl shadow-primary/10 text-white" 
-                    : "bg-white/50 dark:bg-white/5 border-transparent hover:border-primary/20 hover:bg-white dark:hover:bg-white/10 text-slate-600 shadow-sm"
+                    ? "bg-slate-900 border-primary text-white" 
+                    : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 shadow-sm"
                 )}
               >
                 {selectedId === doc.id && (
@@ -121,7 +153,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
                   />
                 )}
                 <div className={cn(
-                  "h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 group-hover:scale-110 shadow-lg",
+                  "h-9 w-9 rounded-md flex items-center justify-center shrink-0 transition-colors",
                   selectedId === doc.id ? "bg-primary text-white" : "bg-primary/10 text-primary"
                 )}>
                   <Stethoscope className="h-5 w-5" />
@@ -133,7 +165,9 @@ export function DoctorsClient({ initialDoctors }: Props) {
                   )}>{doc.full_name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant={selectedId === doc.id ? "secondary" : "outline"} className="text-[7px]">
-                      {doc.group_type === 'normal' ? 'NORMAL' : 'H.SONU'}
+                      {doc.group_type === 'normal' && 'NORMAL'}
+                      {doc.group_type === 'weekend' && 'H.SONU'}
+                      {doc.group_type === 'night_only' && 'GECE'}
                     </Badge>
                     {doc.ekuri_pair_id && (
                       <ShieldCheck className={cn("h-3 w-3", selectedId === doc.id ? "text-primary" : "text-primary")} />
@@ -170,14 +204,14 @@ export function DoctorsClient({ initialDoctors }: Props) {
               className="h-full flex flex-col space-y-6"
             >
               {/* Header Card - Daha Kompakt */}
-              <Card className="overflow-hidden border-none shadow-2xl">
-                <div className="h-32 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+              <Card className="overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+                <div className="h-20 bg-slate-900 relative overflow-hidden">
                   {/* Aura Pattern */}
                   <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[80px] rounded-full translate-x-1/2 -translate-y-1/2" />
                   
-                  <div className="absolute -bottom-12 left-8 p-1 bg-background rounded-2xl shadow-2xl">
-                    <div className="h-24 w-24 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white border-4 border-background">
-                      <Stethoscope className="h-10 w-10" />
+                  <div className="absolute -bottom-8 left-6 p-1 bg-background rounded-lg shadow-sm">
+                    <div className="h-16 w-16 rounded-md bg-primary flex items-center justify-center text-white border-4 border-background">
+                      <Stethoscope className="h-7 w-7" />
                     </div>
                   </div>
                   
@@ -187,16 +221,16 @@ export function DoctorsClient({ initialDoctors }: Props) {
                   </div>
                 </div>
                 
-                <CardContent className="pt-16 pb-6 px-8">
+                <CardContent className="pt-12 pb-5 px-6">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                           {selectedDoctor.full_name}
                         </h1>
                         <Badge variant="premium" className="h-6">
                           <Activity className="h-3 w-3 mr-1" />
-                          AKTİF
+                          {selectedDoctor.is_active ? 'AKTİF' : 'PASİF'}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400 text-xs font-semibold">
@@ -216,24 +250,24 @@ export function DoctorsClient({ initialDoctors }: Props) {
 
               {/* Quick Stats Grid - Daha Kompakt */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-6 hover:-translate-y-0.5 transition-all duration-300 border-none shadow-lg">
+                <Card className="p-5 border border-slate-200 dark:border-white/10 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
                       <Users className="h-5 w-5" />
                     </div>
                     <div className="space-y-0.5">
                       <h4 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Grup Türü</h4>
                       <p className="text-xl font-black text-slate-900 dark:text-white leading-none">
-                        {selectedDoctor.group_type === 'normal' ? 'Hafta İçi' : 'Hafta Sonu'}
+                        {groupLabel(selectedDoctor.group_type)}
                       </p>
                     </div>
                   </div>
                   <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Sistem rotasyon önceliği</p>
                 </Card>
 
-                    <div className="bg-slate-50/50 dark:bg-white/5 rounded-2xl p-6 hover:shadow-lg transition-all border border-transparent hover:border-primary/10">
+                    <div className="bg-white dark:bg-white/5 rounded-lg p-5 border border-slate-200 dark:border-white/10 shadow-sm">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
                           <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div className="space-y-0.5">
@@ -254,9 +288,9 @@ export function DoctorsClient({ initialDoctors }: Props) {
                       )}
                     </div>
 
-                <Card className="p-6 hover:-translate-y-0.5 transition-all duration-300 border-none shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
+                <Card className="p-5 border border-slate-200 dark:border-white/10 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                    <div className="h-9 w-9 rounded-md bg-primary text-white flex items-center justify-center">
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <div className="space-y-0.5">
@@ -279,7 +313,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
 
               {/* Bottom Content Area - Quick Actions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none shadow-xl">
+                <Card className="border border-slate-200 dark:border-white/10 shadow-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-base">Hızlı İşlemler</CardTitle>
                     <CardDescription className="text-xs">Doktor yönetimi</CardDescription>
@@ -298,14 +332,27 @@ export function DoctorsClient({ initialDoctors }: Props) {
                       doctorId={selectedDoctor.id} 
                       doctorName={selectedDoctor.full_name}
                     />
-                    <Button variant="outline" className="w-full justify-start h-12 text-rose-600 hover:text-rose-700 hover:bg-rose-50">
+                    <EditDoctorDialog doctor={selectedDoctor} />
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start h-12"
+                      onClick={handleToggleActive}
+                    >
+                      <Activity className="h-4 w-4 mr-2" />
+                      {selectedDoctor.is_active ? 'Doktoru Pasifleştir' : 'Doktoru Aktif Et'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start h-12 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                      onClick={handleDeleteDoctor}
+                    >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Doktoru Sil
                     </Button>
                   </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-xl">
+                <Card className="border border-slate-200 dark:border-white/10 shadow-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-base">İstatistikler</CardTitle>
                     <CardDescription className="text-xs">2026 Yılı Özeti</CardDescription>

@@ -5,6 +5,30 @@ import { Scheduler } from '@/lib/scheduler';
 import { revalidatePath } from 'next/cache';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
+const TURKISH_HOLIDAYS_2026 = new Set([
+  '2026-01-01',
+  '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22',
+  '2026-04-23',
+  '2026-05-01',
+  '2026-05-19',
+  '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29', '2026-05-30',
+  '2026-07-15',
+  '2026-08-30',
+  '2026-10-28', '2026-10-29',
+]);
+
+function isWeekendOrHoliday(date: string) {
+  const day = new Date(`${date}T00:00:00`).getDay();
+  return day === 0 || day === 6 || TURKISH_HOLIDAYS_2026.has(date);
+}
+
+function isAdjacentOrSameDay(left: string, right: string) {
+  const leftTime = new Date(`${left}T00:00:00`).getTime();
+  const rightTime = new Date(`${right}T00:00:00`).getTime();
+  const dayDiff = Math.abs(Math.round((leftTime - rightTime) / (24 * 60 * 60 * 1000)));
+  return dayDiff <= 1;
+}
+
 export async function getMonthlyPlans(year: number) {
   const { data: plans, error } = await supabase
     .from('monthly_plans')
@@ -69,7 +93,8 @@ export async function getPlan(yearMonth: string) {
   const { data: leaves, error: leaveError } = await supabase
     .from('doctor_leaves')
     .select('*, doctor:doctors(full_name)')
-    .or(`start_date.lte.${endDate},end_date.gte.${startDate}`);
+    .lte('start_date', endDate)
+    .gte('end_date', startDate);
 
   if (leaveError) throw new Error(leaveError.message);
 
@@ -113,6 +138,24 @@ export async function generateAutoPlan(yearMonth: string) {
 
   // 2. Clear old assignments (trigger çalışmaz - DELETE'de trigger yok)
   console.log('Eski nöbetler temizleniyor...');
+  const { data: neighboringAssignments, error: neighboringError } = await supabase
+    .from('shift_assignments')
+    .select('doctor_id, date')
+    .neq('plan_id', plan.id);
+
+  if (neighboringError) throw new Error(neighboringError.message);
+
+  const boundaryConflict = assignments.find(assignment =>
+    neighboringAssignments?.some(existing =>
+      existing.doctor_id === assignment.doctor_id && isAdjacentOrSameDay(existing.date, assignment.date)
+    )
+  );
+
+  if (boundaryConflict) {
+    const doctor = doctors.find(d => d.id === boundaryConflict.doctor_id);
+    throw new Error(`${doctor?.full_name || boundaryConflict.doctor_id} için mevcut planlarla peş peşe nöbet çakışması oluşuyor.`);
+  }
+
   await supabase.from('shift_assignments').delete().eq('plan_id', plan.id);
   
   // 3. Insert new assignments (trigger çalışır - INSERT'de trigger var)
@@ -129,7 +172,7 @@ export async function generateAutoPlan(yearMonth: string) {
   // 4. Recalculate statistics (en sağlıklı yöntem)
   console.log('İstatistikler yeniden hesaplanıyor...');
   const { error: recalcError } = await supabase.rpc('recalculate_plan_stats', {
-    p_plan_id: plan.id
+    p_year: year
   });
 
   if (recalcError) {
@@ -178,4 +221,82 @@ export async function simulateYearlyPlan(year: number) {
     console.error('Simülasyon Hatası:', error.message);
     throw new Error(error.message);
   }
+}
+
+export async function updateShiftAssignment(assignmentId: string, doctorId: string, shiftType: 'gunduz' | 'gece') {
+  const { data: currentAssignment, error: assignmentError } = await supabase
+    .from('shift_assignments')
+    .select('*, plan:monthly_plans(year_month)')
+    .eq('id', assignmentId)
+    .maybeSingle();
+
+  if (assignmentError) throw new Error(assignmentError.message);
+  if (!currentAssignment) throw new Error('Nöbet kaydı bulunamadı.');
+
+  const { data: doctor, error: doctorError } = await supabase
+    .from('doctors')
+    .select('*')
+    .eq('id', doctorId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (doctorError) throw new Error(doctorError.message);
+  if (!doctor) throw new Error('Aktif doktor bulunamadı.');
+
+  const date = currentAssignment.date;
+  const isHolidayShift = isWeekendOrHoliday(date);
+
+  if (shiftType === 'gunduz') {
+    if (doctor.group_type === 'night_only') {
+      throw new Error('Sadece gece grubundaki doktor gündüz nöbetine yazılamaz.');
+    }
+    if (isHolidayShift && doctor.group_type !== 'weekend') {
+      throw new Error('Hafta sonu ve tatil gündüz nöbetleri sadece hafta sonu grubuna yazılabilir.');
+    }
+    if (isHolidayShift && !doctor.ekuri_pair_id) {
+      throw new Error('Hafta sonu grubu doktorunun eküri eşleşmesi olmalıdır.');
+    }
+    if (!isHolidayShift && doctor.group_type !== 'normal') {
+      throw new Error('Hafta içi gündüz nöbetleri sadece normal gruba yazılabilir.');
+    }
+  }
+
+  const { data: leaves, error: leaveError } = await supabase
+    .from('doctor_leaves')
+    .select('id')
+    .eq('doctor_id', doctorId)
+    .lte('start_date', date)
+    .gte('end_date', date);
+
+  if (leaveError) throw new Error(leaveError.message);
+  if (leaves && leaves.length > 0) throw new Error('Doktor bu tarihte izinli.');
+
+  const { data: conflicts, error: conflictError } = await supabase
+    .from('shift_assignments')
+    .select('id, date')
+    .eq('doctor_id', doctorId)
+    .neq('id', assignmentId);
+
+  if (conflictError) throw new Error(conflictError.message);
+  const conflict = conflicts?.find(shift => isAdjacentOrSameDay(shift.date, date));
+  if (conflict) {
+    throw new Error(`Peş peşe nöbet kuralı ihlal ediliyor: ${conflict.date} tarihli nöbet var.`);
+  }
+
+  const { error: updateError } = await supabase
+    .from('shift_assignments')
+    .update({
+      doctor_id: doctorId,
+      shift_type: shiftType,
+      is_ekuri: false,
+      partner_id: null,
+    })
+    .eq('id', assignmentId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  const [year] = currentAssignment.plan.year_month.split('-').map(Number);
+  await supabase.rpc('recalculate_plan_stats', { p_year: year });
+  revalidatePath(`/admin/plans/${currentAssignment.plan.year_month}`);
+  revalidatePath('/admin/fairness');
 }

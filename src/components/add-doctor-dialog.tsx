@@ -31,16 +31,17 @@ export function AddDoctorDialog() {
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       fullName: '',
-      groupType: 'normal' as 'normal' | 'weekend',
+      ekuriPartnerName: '',
+      groupType: 'normal' as 'normal' | 'weekend' | 'night_only',
     }
   });
 
   const selectedGroup = watch('groupType');
 
-  const onSubmit = async (data: { fullName: string; groupType: 'normal' | 'weekend' }) => {
+  const onSubmit = async (data: { fullName: string; ekuriPartnerName: string; groupType: 'normal' | 'weekend' | 'night_only' }) => {
     setLoading(true);
     try {
-      await addDoctor(data.fullName, data.groupType);
+      await addDoctor(data.fullName, data.groupType, data.ekuriPartnerName);
       toast.success('Doktor başarıyla eklendi');
       setOpen(false);
       reset();
@@ -82,15 +83,28 @@ export function AddDoctorDialog() {
             >
               <SelectTrigger>
                 <SelectValue placeholder="Grup seçin">
-                  {selectedGroup === 'normal' ? 'Normal Grup' : 'Hafta Sonu Grubu'}
+                  {selectedGroup === 'normal' && 'Normal Grup'}
+                  {selectedGroup === 'weekend' && 'Hafta Sonu Grubu'}
+                  {selectedGroup === 'night_only' && 'Sadece Gece'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="normal" textValue="Normal Grup">Normal Grup</SelectItem>
                 <SelectItem value="weekend" textValue="Hafta Sonu Grubu">Hafta Sonu Grubu</SelectItem>
+                <SelectItem value="night_only" textValue="Sadece Gece">Sadece Gece</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {selectedGroup === 'weekend' && (
+            <div className="space-y-2">
+              <Label htmlFor="ekuriPartnerName">Eküri Partneri</Label>
+              <Input 
+                id="ekuriPartnerName" 
+                placeholder="Dr. Ayşe Demir" 
+                {...register('ekuriPartnerName', { required: selectedGroup === 'weekend' })} 
+              />
+            </div>
+          )}
           <DialogFooter>
             <Button type="submit" disabled={loading}>
               {loading ? 'Kaydediliyor...' : 'Kaydet'}

@@ -6,7 +6,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Types based on the schema
-export type GroupType = 'normal' | 'weekend';
+export type GroupType = 'normal' | 'weekend' | 'night_only';
 export type ShiftType = 'gunduz' | 'gece';
 export type PlanStatus = 'draft' | 'published' | 'locked';
 

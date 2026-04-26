@@ -31,13 +31,6 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${inter.variable} font-outfit min-h-full antialiased bg-background text-foreground`}
       >
-        {/* Aurora Background Effects - Subtle and high-end */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-primary/5 blur-[120px] rounded-full animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-accent/5 blur-[120px] rounded-full animate-pulse [animation-delay:3s]" />
-          <div className="absolute top-[30%] left-[20%] w-[40%] h-[40%] bg-blue-500/5 blur-[150px] rounded-full" />
-        </div>
-
         <div className="flex min-h-screen">
           <Sidebar />
           <CommandPalette />

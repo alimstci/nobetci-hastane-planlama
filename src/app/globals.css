@@ -40,54 +40,53 @@
 }
 
 :root {
-  /* Aurora Pro Palette - Grounded Light Mode */
-  --background: oklch(0.96 0.01 240); /* Slightly darker for better card contrast */
-  --foreground: oklch(0.15 0.02 240);
+  --background: oklch(0.975 0.004 240);
+  --foreground: oklch(0.18 0.018 250);
   
-  --primary: oklch(0.55 0.15 185);
+  --primary: oklch(0.48 0.11 190);
   --primary-foreground: oklch(1 0 0);
   
-  --secondary: oklch(0.90 0.02 240);
-  --secondary-foreground: oklch(0.15 0.02 240);
+  --secondary: oklch(0.94 0.008 240);
+  --secondary-foreground: oklch(0.22 0.018 250);
   
-  --accent: oklch(0.60 0.15 195);
-  --accent-foreground: oklch(0.15 0.02 240);
+  --accent: oklch(0.62 0.10 160);
+  --accent-foreground: oklch(0.18 0.018 250);
   
-  --muted: oklch(0.92 0.01 240);
-  --muted-foreground: oklch(0.35 0.03 240); /* Darkened for accessibility */
+  --muted: oklch(0.94 0.006 240);
+  --muted-foreground: oklch(0.43 0.025 250);
   
-  --border: oklch(0.88 0.01 240);
-  --input: oklch(0.88 0.01 240);
-  --ring: oklch(0.55 0.15 185 / 0.4);
+  --border: oklch(0.88 0.008 240);
+  --input: oklch(0.88 0.008 240);
+  --ring: oklch(0.48 0.11 190 / 0.35);
   
-  --card: oklch(1 0 0 / 0.95); /* Increased opacity from 0.7 for readability */
-  --card-foreground: oklch(0.15 0.02 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.018 250);
   
   --destructive: oklch(0.60 0.20 20);
   --destructive-foreground: oklch(1 0 0);
   
-  --radius: 1rem;
+  --radius: 0.5rem;
 }
 
 .dark {
   /* Aurora Pro Palette - High-End Dark Mode */
-  --background: oklch(0.10 0.02 240);
-  --foreground: oklch(0.95 0.01 240);
+  --background: oklch(0.14 0.018 250);
+  --foreground: oklch(0.94 0.01 240);
   
-  --primary: oklch(0.65 0.15 185); /* Vibrant Cyan/Teal */
-  --primary-foreground: oklch(0.10 0.02 240);
+  --primary: oklch(0.66 0.11 190);
+  --primary-foreground: oklch(0.13 0.018 250);
   
   --secondary: oklch(0.18 0.03 240);
   --secondary-foreground: oklch(0.95 0.01 240);
   
-  --accent: oklch(0.50 0.20 300); /* Deep Purple Accent */
+  --accent: oklch(0.58 0.10 160);
   --accent-foreground: oklch(1 0 0);
   
   --muted: oklch(0.15 0.02 240);
   --muted-foreground: oklch(0.65 0.03 240);
   
   --border: oklch(0.20 0.02 240);
-  --card: oklch(0.12 0.02 240 / 0.6);
+  --card: oklch(0.18 0.018 250);
   --card-foreground: oklch(0.95 0.01 240);
   
   --ring: oklch(0.65 0.15 185 / 0.4);
@@ -95,7 +94,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-none transition-all duration-300;
+    @apply border-border outline-none;
   }
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary overflow-x-hidden;
@@ -106,14 +105,12 @@
 /* --- Premium Aurora Utilities --- */
 
 .glass-card {
-  @apply backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 shadow-2xl;
-  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.08);
+  @apply bg-card border border-slate-200 dark:border-white/10 shadow-sm;
+  box-shadow: none;
 }
 
 .premium-gradient {
-  background: linear-gradient(135deg, #0d9488 0%, #0369a1 50%, #4338ca 100%);
-  background-size: 200% 200%;
-  animation: premium-flow 5s ease infinite;
+  background: #0f766e;
 }
 
 @keyframes premium-flow {
@@ -148,7 +145,7 @@
 }
 
 .glass-nav {
-  @apply backdrop-blur-xl bg-white/30 dark:bg-slate-950/40 border-r border-white/20 dark:border-white/5;
+  @apply bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-white/10;
 }
 
 .aurora-glow {
@@ -167,7 +164,7 @@
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-br from-slate-950 via-slate-800 to-slate-600 dark:from-white dark:via-slate-200 dark:to-slate-400 font-black;
+  @apply text-slate-950 dark:text-white font-black;
 }
 
 .neon-border {

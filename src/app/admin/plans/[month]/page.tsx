@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { MonthNavigator } from '@/components/month-navigator';
 import { ExportActions } from '@/components/export-actions';
+import { ShiftEditDialog } from '@/components/shift-edit-dialog';
 import { 
   Calendar as CalendarIcon, 
   Sparkles, 
@@ -70,16 +71,16 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       {/* 1. Industrial Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-x-12 gap-y-10">
-        <div className="space-y-8 flex-1">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
+        <div className="space-y-4 flex-1">
           <div className="space-y-3">
              <Badge variant="premium">
                <CalendarCheck className="h-3.5 w-3.5 mr-2" />
                Operasyonel Takvim
              </Badge>
-             <h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-gradient">
+             <h1 className="text-3xl font-black tracking-tight leading-none text-slate-950 dark:text-white">
                Mesai <span className="text-primary italic">Çizelgesi</span>
              </h1>
              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest opacity-60">
@@ -96,7 +97,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
               type="submit"
               variant="premium"
               size="lg"
-              className="h-16 px-10"
+              className="h-11 px-5"
             >
               <Sparkles className="mr-3 h-5 w-5" /> 
               OTOMATİK HESABI BAŞLAT
@@ -105,13 +106,13 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* 2. Main Calendar - Premium Aurora Grid */}
         <div className="lg:col-span-9">
-          <Card className="overflow-hidden border-none shadow-2xl">
-            <div className="grid grid-cols-7 bg-slate-900 border-b border-white/5">
+          <Card className="overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+            <div className="grid grid-cols-7 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-white/10">
               {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(d => (
-                <div key={d} className="text-center text-[10px] uppercase font-black tracking-widest text-white/50 py-4 px-2">
+                <div key={d} className="text-center text-[10px] uppercase font-bold tracking-wide text-slate-600 dark:text-slate-300 py-3 px-2">
                   {d}
                 </div>
               ))}
@@ -129,9 +130,9 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                   <div 
                     key={dateStr} 
                     className={cn(
-                      "min-h-[160px] border-r border-b border-slate-100 dark:border-white/5 flex flex-col transition-all duration-300",
-                      isCurrentMonth ? "bg-white dark:bg-transparent" : "bg-slate-50/30 dark:bg-white/5 opacity-10 pointer-events-none",
-                      isWeekendDay && isCurrentMonth && "bg-slate-50/50 dark:bg-white/[0.02]"
+                      "min-h-[145px] border-r border-b border-slate-200 dark:border-white/10 flex flex-col",
+                      isCurrentMonth ? "bg-white dark:bg-slate-950" : "bg-slate-50 dark:bg-slate-900/50 opacity-40 pointer-events-none",
+                      isWeekendDay && isCurrentMonth && "bg-slate-50 dark:bg-white/[0.03]"
                     )}
                   >
                     <div className={cn(
@@ -146,16 +147,18 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                     <div className="p-2 space-y-1.5 flex-1 overflow-hidden">
                       {/* Night Shift - Cyber Dark Style */}
                       {dayAssignments?.filter(a => a.shift_type === 'gece').map(a => (
-                        <div key={a.id} className="p-2 rounded-xl bg-slate-900 text-[10px] font-black text-white border border-primary/20 flex items-center justify-between shadow-xl shadow-primary/10 group cursor-default">
+                        <div key={a.id} className="px-2 py-1.5 rounded-md bg-slate-900 text-[10px] font-bold text-white border border-slate-800 flex items-center gap-1.5 justify-between group cursor-default">
                           <span className="truncate uppercase tracking-tight">{a.doctor?.full_name}</span>
+                          {a.id && <ShiftEditDialog assignment={a} doctors={doctors || []} />}
                           <Badge variant="premium" className="h-3 w-3 p-0 rounded-full shrink-0" />
                         </div>
                       ))}
 
                       {/* Day Shifts - Glassy Light Style */}
                       {dayAssignments?.filter(a => a.shift_type === 'gunduz').map(a => (
-                        <div key={a.id} className="p-2 rounded-xl bg-primary/5 dark:bg-white/5 border border-primary/10 text-[10px] font-black text-primary dark:text-primary/80 flex items-center justify-between group cursor-default overflow-hidden">
+                        <div key={a.id} className="px-2 py-1.5 rounded-md bg-teal-50 dark:bg-white/5 border border-teal-100 dark:border-white/10 text-[10px] font-bold text-teal-800 dark:text-teal-200 flex items-center gap-1.5 justify-between group cursor-default overflow-hidden">
                           <span className="truncate uppercase tracking-tight">{a.doctor?.full_name}</span>
+                          {a.id && <ShiftEditDialog assignment={a} doctors={doctors || []} />}
                           {a.is_ekuri && <Users className="h-3 w-3" />}
                         </div>
                       ))}
@@ -180,7 +183,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
 
         {/* 3. Sidebar Statistics */}
         <div className="lg:col-span-3 space-y-8">
-          <Card className="border-none shadow-2xl p-8 space-y-8">
+          <Card className="border border-slate-200 dark:border-white/10 shadow-sm p-5 space-y-6">
             <div className="space-y-1.5">
               <div className="flex items-center gap-3 text-primary mb-2">
                 <Info className="h-5 w-5" />
@@ -209,7 +212,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
               </div>
             </div>
 
-            <div className="bg-primary/5 rounded-[2rem] p-6 border border-primary/10">
+            <div className="bg-primary/5 rounded-lg p-5 border border-primary/10">
                <div className="flex items-center gap-3 text-primary mb-2">
                   <Activity className="h-4 w-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Sistem Notu</span>
@@ -242,7 +245,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                 </div>
               ))}
               {offDutyDoctors.length === 0 && (
-                <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-[2.5rem] border-dashed border-2 stroke-slate-200">
+                <div className="text-center py-10 bg-slate-50 dark:bg-white/5 rounded-lg border-dashed border-2 stroke-slate-200">
                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Kadro Tam Katılım</p>
                 </div>
               )}

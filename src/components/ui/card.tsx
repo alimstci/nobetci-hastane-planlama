@@ -10,10 +10,10 @@ function Card({
     <div
       data-slot="card"
       className={cn(
-        "group/card flex flex-col overflow-hidden transition-all duration-500",
-        variant === "glass" && "glass-card rounded-[2rem]",
-        variant === "default" && "bg-card rounded-2xl shadow-lg border border-border",
-        variant === "outline" && "border-2 border-slate-200 dark:border-white/5 bg-transparent rounded-2xl",
+        "group/card flex flex-col overflow-hidden transition-colors duration-200",
+        variant === "glass" && "glass-card rounded-lg",
+        variant === "default" && "bg-card rounded-lg shadow-sm border border-border",
+        variant === "outline" && "border border-slate-200 dark:border-white/10 bg-transparent rounded-lg",
         className
       )}
       {...props}
@@ -39,7 +39,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "font-outfit text-xl font-black uppercase tracking-tighter text-gradient",
+        "font-outfit text-base font-bold tracking-tight text-slate-950 dark:text-white",
         className
       )}
       {...props}
@@ -51,7 +51,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-xs font-medium text-muted-foreground uppercase tracking-widest", className)}
+      className={cn("text-xs font-medium text-muted-foreground", className)}
       {...props}
     />
   )

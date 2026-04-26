@@ -44,11 +44,11 @@ export async function seedDoctors() {
 
   // 2. Randomly Pair some doctors (Eküri)
   const pairInserts = [];
-  const normalDoctors = doctors.filter(d => d.group_type === 'normal');
-  for (let i = 0; i < 20; i += 2) {
+  const weekendDoctors = doctors.filter(d => d.group_type === 'weekend');
+  for (let i = 0; i < weekendDoctors.length - 1; i += 2) {
     pairInserts.push({
-      doctor1_id: normalDoctors[i].id,
-      doctor2_id: normalDoctors[i+1].id
+      doctor1_id: weekendDoctors[i].id,
+      doctor2_id: weekendDoctors[i + 1].id
     });
   }
 

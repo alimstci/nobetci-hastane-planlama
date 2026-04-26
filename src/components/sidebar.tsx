@@ -66,7 +66,7 @@ export function Sidebar() {
         {/* Mobile Header */}
         <div className="fixed top-0 left-0 right-0 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 z-50 flex items-center justify-between px-6 shadow-sm">
           <Link href="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-white">
               <Stethoscope className="h-6 w-6 stroke-[2.5px]" />
             </div>
             <span className="font-black text-xl tracking-tighter text-slate-900 dark:text-white uppercase">
@@ -98,11 +98,11 @@ export function Sidebar() {
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-0 left-0 bottom-0 w-[300px] bg-white dark:bg-slate-900 z-[70] flex flex-col shadow-2xl"
+                className="fixed top-0 left-0 bottom-0 w-[280px] bg-white dark:bg-slate-900 z-[70] flex flex-col shadow-xl"
               >
                 <div className="p-6 flex items-center justify-between border-b border-slate-200 dark:border-white/5">
                   <Link href="/" className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                    <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-white">
                       <Stethoscope className="h-6 w-6 stroke-[2.5px]" />
                     </div>
                     <span className="font-black text-xl tracking-tighter text-slate-900 dark:text-white uppercase">
@@ -156,24 +156,24 @@ export function Sidebar() {
     <motion.aside 
       initial={false}
       animate={{ 
-        width: isCollapsed ? 100 : 300,
-        margin: 16,
-        borderRadius: 28,
+        width: isCollapsed ? 84 : 260,
+        margin: 0,
+        borderRadius: 0,
       }}
       className={cn(
-        "bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-white/10 h-[calc(100vh-32px)] sticky top-4 flex flex-col z-50 overflow-hidden shadow-2xl shadow-black/5 hidden md:flex"
+        "bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-white/10 min-h-screen sticky top-0 flex flex-col z-50 overflow-hidden hidden md:flex"
       )}
     >
-      <div className="p-8 flex items-center justify-between">
+      <div className="p-5 flex items-center justify-between border-b border-slate-200 dark:border-white/10">
         <Link href="/" className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
-            <Stethoscope className="h-7 w-7 stroke-[2.5px]" />
+          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-white">
+            <Stethoscope className="h-5 w-5 stroke-[2.5px]" />
           </div>
           {!isCollapsed && (
             <motion.span 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white uppercase"
+              className="font-black text-xl tracking-tight text-slate-900 dark:text-white"
             >
               Nöbetçi
             </motion.span>
@@ -182,9 +182,9 @@ export function Sidebar() {
       </div>
 
       {!isCollapsed && (
-        <div className="px-6 mb-8">
+        <div className="px-4 my-4">
           <button 
-            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-100/80 dark:bg-white/5 text-slate-500 hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200/50 dark:border-white/5 group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 group"
             aria-label="Ara"
           >
             <Search className="h-5 w-5 shrink-0" />
@@ -198,7 +198,7 @@ export function Sidebar() {
         </div>
       )}
 
-      <nav className="flex-1 px-4 space-y-3 overflow-y-auto mt-4">
+      <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto mt-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.name === 'Nöbet Planları' && pathname.startsWith('/admin/plans'));
@@ -208,7 +208,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative flex items-center gap-4 p-4 rounded-2xl transition-all group overflow-hidden",
+                "relative flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors group overflow-hidden",
                 isActive 
                   ? "text-primary dark:text-white" 
                   : "text-slate-600 dark:text-slate-400 hover:bg-primary/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
@@ -224,22 +224,22 @@ export function Sidebar() {
               {isActive && <div className="sidebar-active-indicator shadow-[0_0_15px_var(--primary)]" />}
               
               <Icon className={cn(
-                "h-6 w-6 shrink-0 z-10", 
-                isActive ? "text-primary" : "group-hover:scale-110 group-hover:text-primary transition-all"
+                "h-5 w-5 shrink-0 z-10", 
+                isActive ? "text-primary" : "group-hover:text-primary transition-colors"
               )} />
               
               {!isCollapsed && (
                 <motion.span 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-[12px] font-black uppercase tracking-widest truncate z-10"
+                  className="text-[12px] font-bold uppercase tracking-wide truncate z-10"
                 >
                   {item.name}
                 </motion.span>
               )}
               
               {isCollapsed && (
-                <div className="absolute left-full ml-6 px-4 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] shadow-2xl">
+                <div className="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wide rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-colors whitespace-nowrap z-[100] shadow-lg">
                   {item.name}
                 </div>
               )}
@@ -248,22 +248,22 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-6 border-t border-slate-200/50 dark:border-white/5 space-y-3">
+      <div className="p-3 border-t border-slate-200 dark:border-white/10 space-y-1.5">
         <button 
           className={cn(
-            "w-full flex items-center gap-4 p-4 rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 transition-all",
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 transition-colors",
             isCollapsed ? "justify-center" : "justify-start"
           )}
           aria-label="Bildirimler"
         >
-          <Bell className="h-6 w-6" />
+          <Bell className="h-5 w-5" />
           {!isCollapsed && <span className="text-[11px] font-black uppercase tracking-widest">Bildirimler</span>}
         </button>
         
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
-            "w-full flex items-center gap-4 p-4 rounded-2xl text-primary bg-primary/5 hover:bg-primary/10 transition-all group",
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-primary bg-primary/5 hover:bg-primary/10 transition-colors group",
             isCollapsed ? "justify-center" : "justify-start"
           )}
           aria-label={isCollapsed ? "Genişlet" : "Küçült"}

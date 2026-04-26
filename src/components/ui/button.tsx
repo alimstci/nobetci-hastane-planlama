@@ -4,11 +4,11 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all duration-300 outline-none select-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-[11px] font-bold uppercase tracking-wide whitespace-nowrap transition-colors duration-200 outline-none select-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:brightness-110",
+        default: "bg-primary text-white hover:bg-primary/90",
         outline:
           "border-slate-200 dark:border-white/10 bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white",
         secondary:
@@ -18,7 +18,7 @@ const buttonVariants = cva(
         destructive:
           "bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600",
         link: "text-primary hover:underline",
-        premium: "premium-gradient text-white shadow-lg shadow-primary/20 hover:shadow-primary/40",
+        premium: "bg-primary text-white hover:bg-primary/90",
       },
       size: {
         default: "h-11 px-6",
