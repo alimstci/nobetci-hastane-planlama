@@ -56,13 +56,13 @@ export function MonthNavigator({ currentMonth }: MonthNavigatorProps) {
   });
 
   return (
-    <div className="flex flex-wrap items-center gap-4 bg-card/40 backdrop-blur-md p-3 rounded-2xl border border-border/50 shadow-sm">
+    <div className="inline-flex flex-wrap items-center gap-3 bg-white dark:bg-white/5 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm">
       <div className="flex items-center gap-2">
         <Button 
           variant="outline" 
           size="icon-sm" 
           onClick={handlePrev}
-          className="rounded-xl hover:bg-primary/5 hover:text-primary transition-colors"
+          className="rounded-md hover:bg-primary/5 hover:text-primary transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -70,7 +70,7 @@ export function MonthNavigator({ currentMonth }: MonthNavigatorProps) {
           variant="outline" 
           size="icon-sm" 
           onClick={handleNext}
-          className="rounded-xl hover:bg-primary/5 hover:text-primary transition-colors"
+          className="rounded-md hover:bg-primary/5 hover:text-primary transition-colors"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -84,10 +84,10 @@ export function MonthNavigator({ currentMonth }: MonthNavigatorProps) {
           value={currentMonth} 
           onValueChange={handleMonthSelect}
         >
-          <SelectTrigger className="w-[200px] bg-transparent border-none font-bold text-base focus:ring-0">
+          <SelectTrigger className="w-[160px] h-9 bg-transparent border-none font-bold text-sm focus:ring-0 px-1">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="rounded-xl shadow-2xl border-border/50">
+          <SelectContent className="rounded-lg shadow-lg border-border/50">
             {months.map((m) => (
               <SelectItem key={m.value} value={m.value} className="capitalize font-medium">
                 {m.label}

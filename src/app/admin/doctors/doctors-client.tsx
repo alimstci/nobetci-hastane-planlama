@@ -100,13 +100,13 @@ export function DoctorsClient({ initialDoctors }: Props) {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-6rem)] gap-6">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-5rem)] gap-5">
       
       {/* LEFT COLUMN: Search and List */}
-      <div className="lg:w-[380px] flex flex-col gap-6">
-        <div className="space-y-4 px-1">
+      <div className="lg:w-[360px] flex flex-col gap-4">
+        <div className="space-y-3 px-1">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-3xl font-black text-gradient uppercase tracking-tighter">
+            <h2 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight">
               Personel
             </h2>
             <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
               <AddDoctorDialog />
             </div>
           </div>
-          <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] opacity-60">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
             Sistemde {initialDoctors?.length} Kayıtlı Personel
           </p>
         </div>
@@ -129,7 +129,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
           <AnimatePresence mode="popLayout">
             {filteredDoctors.map((doc) => (
               <motion.button
@@ -140,7 +140,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
                 key={doc.id}
                 onClick={() => setSelectedId(doc.id)}
                 className={cn(
-                  "w-full text-left p-3 rounded-md transition-colors border flex items-center gap-3 group relative overflow-hidden",
+                  "w-full text-left px-3 py-2.5 rounded-md transition-colors border flex items-center gap-3 group relative overflow-hidden",
                   selectedId === doc.id 
                     ? "bg-slate-900 border-primary text-white" 
                     : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-primary/30 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 shadow-sm"
@@ -149,18 +149,18 @@ export function DoctorsClient({ initialDoctors }: Props) {
                 {selectedId === doc.id && (
                   <motion.div 
                     layoutId="active-bg"
-                    className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent pointer-events-none" 
+                    className="absolute inset-0 bg-primary/10 pointer-events-none" 
                   />
                 )}
                 <div className={cn(
-                  "h-9 w-9 rounded-md flex items-center justify-center shrink-0 transition-colors",
+                  "h-8 w-8 rounded-md flex items-center justify-center shrink-0 transition-colors",
                   selectedId === doc.id ? "bg-primary text-white" : "bg-primary/10 text-primary"
                 )}>
                   <Stethoscope className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1 z-10">
                   <p className={cn(
-                    "font-black text-[12px] uppercase tracking-tighter truncate",
+                    "font-bold text-[13px] tracking-tight truncate",
                     selectedId === doc.id ? "text-white" : "text-slate-900 dark:text-white"
                   )}>{doc.full_name}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -175,15 +175,15 @@ export function DoctorsClient({ initialDoctors }: Props) {
                   </div>
                 </div>
                 <ChevronRight className={cn(
-                  "h-4 w-4 shrink-0 transition-transform z-10",
-                  selectedId === doc.id ? "text-primary translate-x-1" : "text-slate-300 opacity-0 group-hover:opacity-100"
+                  "h-4 w-4 shrink-0 transition-colors z-10",
+                  selectedId === doc.id ? "text-primary" : "text-slate-300 opacity-0 group-hover:opacity-100"
                 )} />
               </motion.button>
             ))}
           </AnimatePresence>
           {filteredDoctors.length === 0 && (
             <div className="py-20 text-center space-y-4">
-              <div className="h-16 w-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 mx-auto">
+              <div className="h-14 w-14 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 mx-auto">
                 <Search className="h-8 w-8" />
               </div>
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Kayıt Bulunamadı</p>
@@ -204,10 +204,10 @@ export function DoctorsClient({ initialDoctors }: Props) {
               className="h-full flex flex-col space-y-6"
             >
               {/* Header Card - Daha Kompakt */}
-              <Card className="overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
-                <div className="h-20 bg-slate-900 relative overflow-hidden">
+              <Card className="border border-slate-200 dark:border-white/10 shadow-sm">
+                <div className="hidden">
                   {/* Aura Pattern */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[80px] rounded-full translate-x-1/2 -translate-y-1/2" />
+                  <div className="hidden" />
                   
                   <div className="absolute -bottom-8 left-6 p-1 bg-background rounded-lg shadow-sm">
                     <div className="h-16 w-16 rounded-md bg-primary flex items-center justify-center text-white border-4 border-background">
@@ -221,19 +221,22 @@ export function DoctorsClient({ initialDoctors }: Props) {
                   </div>
                 </div>
                 
-                <CardContent className="pt-12 pb-5 px-6">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                    <div className="space-y-2">
+                <CardContent className="p-5">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-2 min-w-0">
                       <div className="flex items-center gap-3">
-                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <div className="h-12 w-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <Stethoscope className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight truncate">
                           {selectedDoctor.full_name}
                         </h1>
-                        <Badge variant="premium" className="h-6">
+                        <Badge variant={selectedDoctor.is_active ? "success" : "outline"} className="h-6">
                           <Activity className="h-3 w-3 mr-1" />
                           {selectedDoctor.is_active ? 'AKTİF' : 'PASİF'}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                      <div className="flex flex-wrap items-center gap-4 text-slate-500 dark:text-slate-400 text-xs font-medium">
                         <span className="flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5 text-primary" /> 
                           Ana Kampüs
@@ -243,6 +246,10 @@ export function DoctorsClient({ initialDoctors }: Props) {
                           {new Date(selectedDoctor.created_at).toLocaleDateString('tr')}
                         </span>
                       </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <PairDoctorDialog doctors={initialDoctors} />
+                      <ManageLeavesDialog doctorId={selectedDoctor.id} doctorName={selectedDoctor.full_name} />
                     </div>
                   </div>
                 </CardContent>
@@ -393,9 +400,9 @@ export function DoctorsClient({ initialDoctors }: Props) {
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="h-full flex flex-col items-center justify-center text-center p-12 glass-card rounded-[3rem] border-dashed border-2 bg-transparent"
+              className="h-full flex flex-col items-center justify-center text-center p-10 glass-card rounded-lg border-dashed border-2 bg-transparent"
             >
-              <div className="h-24 w-24 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 mb-8 shadow-inner">
+              <div className="h-20 w-20 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 mb-6">
                 <Users className="h-10 w-10" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Personel Seçiniz</h2>

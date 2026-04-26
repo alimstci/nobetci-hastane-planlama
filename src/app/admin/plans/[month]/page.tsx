@@ -71,26 +71,26 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* 1. Industrial Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 border-b border-slate-200 dark:border-white/10 pb-5">
-        <div className="space-y-4 flex-1">
-          <div className="space-y-3">
-             <Badge variant="premium">
+        <div className="space-y-3 flex-1">
+          <div className="space-y-2">
+             <Badge variant="outline">
                <CalendarCheck className="h-3.5 w-3.5 mr-2" />
                Operasyonel Takvim
              </Badge>
-             <h1 className="text-3xl font-black tracking-tight leading-none text-slate-950 dark:text-white">
+             <h1 className="text-2xl font-bold tracking-tight leading-none text-slate-950 dark:text-white">
                Mesai <span className="text-primary italic">Çizelgesi</span>
              </h1>
-             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest opacity-60">
+             <p className="text-xs font-medium text-slate-500">
                Kurumsal Nöbet ve Personel Organizasyonu
              </p>
           </div>
           <MonthNavigator currentMonth={yearMonth} />
         </div>
         
-        <div className="flex flex-wrap items-end gap-4">
+        <div className="flex flex-wrap items-end gap-3">
           <ExportActions assignments={assignments} monthName={format(monthStart, 'MMMM yyyy', { locale: tr })} />
           <form action={generateAutoPlan.bind(null, yearMonth)}>
             <Button 
@@ -106,9 +106,9 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
         {/* 2. Main Calendar - Premium Aurora Grid */}
-        <div className="lg:col-span-9">
+        <div className="xl:col-span-10">
           <Card className="overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
             <div className="grid grid-cols-7 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-white/10">
               {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(d => (
@@ -130,21 +130,21 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                   <div 
                     key={dateStr} 
                     className={cn(
-                      "min-h-[145px] border-r border-b border-slate-200 dark:border-white/10 flex flex-col",
+                      "min-h-[132px] border-r border-b border-slate-200 dark:border-white/10 flex flex-col",
                       isCurrentMonth ? "bg-white dark:bg-slate-950" : "bg-slate-50 dark:bg-slate-900/50 opacity-40 pointer-events-none",
                       isWeekendDay && isCurrentMonth && "bg-slate-50 dark:bg-white/[0.03]"
                     )}
                   >
                     <div className={cn(
-                      "p-3 text-right flex justify-between items-center",
+                      "px-2.5 py-2 text-right flex justify-between items-center",
                       isWeekendDay ? "text-rose-500" : "text-slate-400"
                     )}>
-                      {isWeekendDay && <span className="text-[8px] font-black uppercase tracking-tighter opacity-50">Hafta Sonu</span>}
+                      {isWeekendDay && <span className="text-[8px] font-bold uppercase tracking-wide opacity-70">Hafta Sonu</span>}
                       {!isWeekendDay && <span />}
-                      <span className="font-black text-base tracking-tighter">{format(day, 'd')}</span>
+                      <span className="font-bold text-sm">{format(day, 'd')}</span>
                     </div>
 
-                    <div className="p-2 space-y-1.5 flex-1 overflow-hidden">
+                    <div className="p-2 space-y-1 flex-1 overflow-hidden">
                       {/* Night Shift - Cyber Dark Style */}
                       {dayAssignments?.filter(a => a.shift_type === 'gece').map(a => (
                         <div key={a.id} className="px-2 py-1.5 rounded-md bg-slate-900 text-[10px] font-bold text-white border border-slate-800 flex items-center gap-1.5 justify-between group cursor-default">
@@ -182,8 +182,8 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
         </div>
 
         {/* 3. Sidebar Statistics */}
-        <div className="lg:col-span-3 space-y-8">
-          <Card className="border border-slate-200 dark:border-white/10 shadow-sm p-5 space-y-6">
+        <div className="xl:col-span-2 space-y-4">
+          <Card className="border border-slate-200 dark:border-white/10 shadow-sm p-4 space-y-4">
             <div className="space-y-1.5">
               <div className="flex items-center gap-3 text-primary mb-2">
                 <Info className="h-5 w-5" />
@@ -229,19 +229,19 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                <Badge variant="outline" className="px-2 h-5 text-[10px] font-black">{offDutyDoctors.length}</Badge>
             </div>
             
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
               {offDutyDoctors.map(doctor => (
-                <div key={doctor.id} className="p-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-transparent hover:border-primary/20 hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-between group shadow-sm">
+                <div key={doctor.id} className="p-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-primary/20 transition-colors flex items-center justify-between group shadow-sm">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all shadow-inner">
-                      <Stethoscope className="h-5 w-5" />
+                    <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                      <Stethoscope className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-900 dark:text-white uppercase truncate tracking-tighter">{doctor.full_name}</p>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">{doctor.group_type}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{doctor.full_name}</p>
+                      <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{doctor.group_type}</p>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                  <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))}
               {offDutyDoctors.length === 0 && (
