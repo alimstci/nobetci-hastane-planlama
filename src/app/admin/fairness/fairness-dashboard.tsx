@@ -97,6 +97,14 @@ function getNumericValue(row: FairnessRow, key: WeekdayKey) {
   return Number(row[key] || 0);
 }
 
+function getPriorityLabel(score?: number | null) {
+  const value = Number(score || 0);
+  if (value >= 85) return 'Oncelikli';
+  if (value >= 70) return 'Dengeli';
+  if (value >= 55) return 'Yuklu';
+  return 'Dinlendir';
+}
+
 export default function FairnessDashboard({ stats }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -288,8 +296,12 @@ export default function FairnessDashboard({ stats }: Props) {
                       <Badge variant="outline" className="mt-1.5 bg-slate-100/50 dark:bg-white/5 text-xs">
                         {getGroupLabel(row.doctor?.group_type)}
                       </Badge>
-                      <Badge variant={Number(row.fairness_score || 0) >= 85 ? 'success' : 'outline'} className="ml-2 mt-1.5 text-xs">
-                        Skor {row.fairness_score}
+                      <Badge
+                        variant={Number(row.fairness_score || 0) >= 70 ? 'success' : 'outline'}
+                        className="ml-2 mt-1.5 text-xs"
+                        title="Bu deger ayni grup icinde planlama onceligini gosterir."
+                      >
+                        {getPriorityLabel(row.fairness_score)} {row.fairness_score}
                       </Badge>
                     </div>
                     <button 

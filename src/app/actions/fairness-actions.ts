@@ -59,14 +59,33 @@ export async function getFairnessStats(year: number) {
         total_shifts: totalDayShifts + totalNightShifts,
       };
     });
-  const averageLoad = enrichedRows.length > 0
-    ? enrichedRows.reduce((sum, row) => sum + row.total_shifts, 0) / enrichedRows.length
-    : 0;
+
+  const groupAverages = new Map<string, { total: number; night: number; holiday: number; count: number }>();
+  for (const row of enrichedRows) {
+    const groupType = row.doctor?.group_type || 'normal';
+    const average = groupAverages.get(groupType) || { total: 0, night: 0, holiday: 0, count: 0 };
+    average.total += row.total_shifts;
+    average.night += row.total_night_shifts;
+    average.holiday += row.holiday_shifts;
+    average.count++;
+    groupAverages.set(groupType, average);
+  }
 
   return enrichedRows
     .map(row => {
-      const loadGap = Math.abs(row.total_shifts - averageLoad);
-      const fairnessScore = Math.max(0, Math.round(100 - loadGap * 8 - row.total_night_shifts * 1.5 - row.holiday_shifts * 0.5));
+      const groupType = row.doctor?.group_type || 'normal';
+      const average = groupAverages.get(groupType) || { total: 0, night: 0, holiday: 0, count: 1 };
+      const avgTotal = average.total / Math.max(average.count, 1);
+      const avgNight = average.night / Math.max(average.count, 1);
+      const avgHoliday = average.holiday / Math.max(average.count, 1);
+
+      let priorityScore = 70;
+      priorityScore += (avgTotal - row.total_shifts) * 7;
+      priorityScore += (avgNight - row.total_night_shifts) * 5;
+      if (groupType === 'weekend') {
+        priorityScore += (avgHoliday - row.holiday_shifts) * 6;
+      }
+      const fairnessScore = Math.max(0, Math.min(100, Math.round(priorityScore)));
       return { ...row, fairness_score: fairnessScore };
     })
     .sort((a, b) => b.total_shifts - a.total_shifts);

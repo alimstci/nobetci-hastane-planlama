@@ -142,6 +142,53 @@ export class Scheduler {
     return restA ? 1 : -1;
   }
 
+  private getAnnualNightShifts(doctorId: string) {
+    const historyNight = this.historyStats.get(doctorId)?.annualNight || 0;
+    const debtNight = this.debtMap.get(doctorId)?.total_night_shifts_year || 0;
+    return Math.max(historyNight, debtNight);
+  }
+
+  private getPriorityScore(doctorId: string, context: 'night' | 'weekday_day' | 'holiday_day') {
+    const local = this.localStats.get(doctorId);
+    const history = this.historyStats.get(doctorId);
+    const dayCount = local?.total_day || 0;
+    const holidayCount = local?.holiday || 0;
+    const nightCount = this.getAnnualNightShifts(doctorId);
+    const monthlyTotal = this.getMonthlyTotal(doctorId);
+    const previousMonthTotal = history?.previousMonthTotal || 0;
+    const previousMonthNight = history?.previousMonthNight || 0;
+    const debtPoints = this.debtMap.get(doctorId)?.debt_points || 0;
+
+    let score = 100;
+    score -= monthlyTotal * 22;
+    score -= previousMonthTotal * 10;
+    score -= (dayCount + nightCount) * 2;
+    if (this.isRestPoolDoctor(doctorId)) score -= 30;
+
+    if (context === 'night') {
+      score += debtPoints * 4;
+      score -= nightCount * 8;
+      score -= previousMonthNight * 28;
+    }
+
+    if (context === 'weekday_day') {
+      score -= dayCount * 4;
+      score -= nightCount * 2;
+    }
+
+    if (context === 'holiday_day') {
+      score -= holidayCount * 8;
+      score -= dayCount;
+      score -= nightCount * 2;
+    }
+
+    return score;
+  }
+
+  private comparePriority(a: Doctor, b: Doctor, context: 'night' | 'weekday_day' | 'holiday_day') {
+    return this.getPriorityScore(b.id, context) - this.getPriorityScore(a.id, context);
+  }
+
   private chooseRestAwareCandidates(doctors: Doctor[], requiredCount: number) {
     const preferred = doctors.filter(doctor => !this.isRestPoolDoctor(doctor.id));
     const restPool = doctors.filter(doctor => this.isRestPoolDoctor(doctor.id));
@@ -165,6 +212,8 @@ export class Scheduler {
       const candidates = this.shuffle([...allDoctors])
         .filter(doctor => this.canTakeMonthlyShift(doctor.id))
         .sort((a, b) => {
+          const priorityCompare = this.comparePriority(a, b, 'night');
+          if (priorityCompare !== 0) return priorityCompare;
           const debtA = this.debtMap.get(a.id)?.debt_points || 0;
           const debtB = this.debtMap.get(b.id)?.debt_points || 0;
           if (debtA !== debtB) return debtB - debtA;
@@ -219,6 +268,8 @@ export class Scheduler {
         .sort((a, b) => {
           const restCompare = this.compareRestPool(a, b);
           if (restCompare !== 0) return restCompare;
+          const priorityCompare = this.comparePriority(a, b, 'holiday_day');
+          if (priorityCompare !== 0) return priorityCompare;
           const statsA = this.localStats.get(a.id)?.holiday || 0;
           const statsB = this.localStats.get(b.id)?.holiday || 0;
           if (statsA !== statsB) return statsA - statsB;
@@ -265,6 +316,8 @@ export class Scheduler {
         .sort((a, b) => {
           const restCompare = this.compareRestPool(a, b);
           if (restCompare !== 0) return restCompare;
+          const priorityCompare = this.comparePriority(a, b, 'weekday_day');
+          if (priorityCompare !== 0) return priorityCompare;
           const statsA = this.localStats.get(a.id)?.total_day || 0;
           const statsB = this.localStats.get(b.id)?.total_day || 0;
           if (statsA !== statsB) return statsA - statsB;
