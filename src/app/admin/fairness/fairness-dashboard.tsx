@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { getDoctorShiftHistory } from '@/app/actions/fairness-actions';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,7 +30,11 @@ import {
   History,
   LayoutGrid,
   List,
-  Sparkles
+  Sparkles,
+  Moon,
+  SunMedium,
+  CalendarDays,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -64,6 +68,7 @@ type ShiftHistoryRow = {
 };
 
 type WeekdayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
+type ReportMode = 'all' | 'night' | 'weekday' | 'weekend';
 
 interface Props {
   stats: FairnessRow[];
@@ -105,20 +110,88 @@ function getPriorityLabel(score?: number | null) {
   return 'Dinlendir';
 }
 
+function getMetricValue(row: ReturnType<typeof normalizeFairnessRow>, mode: ReportMode) {
+  if (mode === 'night') return row.total_night_shifts;
+  if (mode === 'weekday') return row.total_day_shifts;
+  if (mode === 'weekend') return row.holiday_shifts;
+  return row.total_shifts;
+}
+
+function getMetricLabel(mode: ReportMode) {
+  if (mode === 'night') return 'Gece';
+  if (mode === 'weekday') return 'Hafta ici';
+  if (mode === 'weekend') return 'Tatil';
+  return 'Toplam';
+}
+
+function getReportRows(rows: ReturnType<typeof normalizeFairnessRow>[], mode: ReportMode) {
+  if (mode === 'weekday') return rows.filter(row => row.doctor?.group_type === 'normal');
+  if (mode === 'weekend') return rows.filter(row => row.doctor?.group_type === 'weekend');
+  return rows;
+}
+
+function getReportSummary(rows: ReturnType<typeof normalizeFairnessRow>[], mode: ReportMode) {
+  const reportRows = getReportRows(rows, mode);
+  const values = reportRows.map(row => getMetricValue(row, mode));
+  const total = values.reduce((sum, value) => sum + value, 0);
+  const min = values.length > 0 ? Math.min(...values) : 0;
+  const max = values.length > 0 ? Math.max(...values) : 0;
+  const average = values.length > 0 ? total / values.length : 0;
+
+  return {
+    count: reportRows.length,
+    total,
+    min,
+    max,
+    average,
+    spread: max - min,
+  };
+}
+
 export default function FairnessDashboard({ stats }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [reportMode, setReportMode] = useState<ReportMode>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const normalizedStats = useMemo(() => stats.map(normalizeFairnessRow), [stats]);
+  const reportSummaries = useMemo(() => {
+    const configs: { mode: ReportMode; title: string; subtitle: string; icon: typeof Users }[] = [
+      { mode: 'all', title: 'Genel Yuk', subtitle: 'Tum nobet toplam dengesi', icon: Users },
+      { mode: 'night', title: 'Gece Nobeti', subtitle: 'Tum doktorlar gece havuzu', icon: Moon },
+      { mode: 'weekday', title: 'Hafta Ici Gunduz', subtitle: 'Normal kadro gunduz yuku', icon: SunMedium },
+      { mode: 'weekend', title: 'Hafta Sonu / Tatil', subtitle: 'Hafta sonu grubu tatil yuku', icon: CalendarDays },
+    ];
+
+    return configs.map(config => ({
+      ...config,
+      summary: getReportSummary(normalizedStats, config.mode),
+    }));
+  }, [normalizedStats]);
+  const activeReport = reportSummaries.find(report => report.mode === reportMode) || reportSummaries[0];
 
   const filteredStats = useMemo(() => {
-    return normalizedStats.filter(s => 
-      s.doctor?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [normalizedStats, searchTerm]);
+    return getReportRows(normalizedStats, reportMode)
+      .filter(s => s.doctor?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => {
+        const valueDiff = getMetricValue(b, reportMode) - getMetricValue(a, reportMode);
+        if (valueDiff !== 0) return valueDiff;
+        return (a.doctor?.full_name || '').localeCompare(b.doctor?.full_name || '');
+      });
+  }, [normalizedStats, reportMode, searchTerm]);
 
   const globalDayStats = useMemo(() => {
+    if (reportMode === 'night' || reportMode === 'weekend') {
+      return getReportRows(normalizedStats, reportMode)
+        .sort((a, b) => getMetricValue(b, reportMode) - getMetricValue(a, reportMode))
+        .slice(0, 12)
+        .map(row => ({
+          name: (row.doctor?.full_name || 'DR').split(' ').slice(0, 2).join(' '),
+          label: row.doctor?.full_name || 'Doktor',
+          value: getMetricValue(row, reportMode),
+        }));
+    }
+
     const days: { name: string; key: WeekdayKey; label: string }[] = [
       { name: 'Pzt', key: 'monday', label: 'Pazartesi' },
       { name: 'Sal', key: 'tuesday', label: 'Salı' },
@@ -130,9 +203,9 @@ export default function FairnessDashboard({ stats }: Props) {
     return days.map(d => ({
       name: d.name,
       label: d.label,
-      value: normalizedStats.reduce((sum, s) => sum + Number(s[d.key] || 0), 0)
+      value: getReportRows(normalizedStats, reportMode).reduce((sum, s) => sum + Number(s[d.key] || 0), 0)
     }));
-  }, [normalizedStats]);
+  }, [normalizedStats, reportMode]);
 
   const maxGlobalValue = Math.max(...globalDayStats.map(d => d.value), 1);
 
@@ -155,6 +228,65 @@ export default function FairnessDashboard({ stats }: Props) {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {reportSummaries.map(({ mode, title, subtitle, icon: Icon, summary }) => (
+          <button
+            type="button"
+            key={mode}
+            onClick={() => setReportMode(mode)}
+            className="text-left"
+          >
+            <Card
+              className={cn(
+                "h-full border transition-all duration-300",
+                reportMode === mode
+                  ? "border-primary/40 bg-primary/10 shadow-lg shadow-primary/10"
+                  : "border-slate-200/80 bg-white/70 hover:border-primary/30 hover:bg-white"
+              )}
+            >
+              <CardContent className="p-5 space-y-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-11 w-11 rounded-lg flex items-center justify-center",
+                      reportMode === mode ? "bg-primary text-white" : "bg-slate-100 text-primary"
+                    )}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-950">{title}</h3>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-1">{subtitle}</p>
+                    </div>
+                  </div>
+                  <Badge variant={summary.spread <= 1 ? 'success' : 'outline'} className="text-[10px]">
+                    Fark {summary.spread}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-slate-400">Kisi</p>
+                    <p className="text-lg font-black text-slate-950">{summary.count}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-slate-400">Ort</p>
+                    <p className="text-lg font-black text-slate-950">{summary.average.toFixed(1)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-slate-400">Min</p>
+                    <p className="text-lg font-black text-slate-950">{summary.min}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-slate-400">Max</p>
+                    <p className="text-lg font-black text-slate-950">{summary.max}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
+        ))}
+      </div>
+
       {/* 2. Global System Balance Panel */}
       <Card className="overflow-hidden border-none shadow-2xl">
         <CardHeader className="bg-slate-900/50 dark:bg-black/20 p-8">
@@ -164,11 +296,13 @@ export default function FairnessDashboard({ stats }: Props) {
                   <BarChart3 className="h-6 w-6 text-white" />
                </div>
                <div className="space-y-0.5">
-                  <CardTitle>Genel Planlama Dengesi</CardTitle>
-                  <CardDescription>Hafta İçi Toplam Atama Hacmi</CardDescription>
+                  <CardTitle>{activeReport.title} Dengesi</CardTitle>
+                  <CardDescription>{activeReport.subtitle}</CardDescription>
                </div>
             </div>
-            <Badge variant="outline" className="hidden lg:flex">Canlı Veri</Badge>
+            <Badge variant="outline" className="hidden lg:flex">
+              Ortalama {activeReport.summary.average.toFixed(1)}
+            </Badge>
           </div>
         </CardHeader>
 
@@ -182,6 +316,7 @@ export default function FairnessDashboard({ stats }: Props) {
                   axisLine={false} 
                   tickLine={false} 
                   tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }}
+                  tickFormatter={(value: string) => value.length > 9 ? `${value.slice(0, 9)}...` : value}
                   dy={10}
                 />
                 <YAxis hide />
@@ -221,7 +356,7 @@ export default function FairnessDashboard({ stats }: Props) {
                   Sistem, nöbetleri atarken sadece toplam sayıya değil, **gün bazlı varyansa** da bakar. İdeal bir sistemde barların boyları birbirine yakındır.
                 </p>
              </div>
-             <div className="grid grid-cols-5 gap-2 px-2">
+             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 px-2">
                 {globalDayStats.map(d => (
                   <div key={d.name} className="text-center group">
                     <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1 group-hover:text-primary transition-colors">{d.name}</p>
@@ -302,6 +437,9 @@ export default function FairnessDashboard({ stats }: Props) {
                         title="Bu deger ayni grup icinde planlama onceligini gosterir."
                       >
                         {getPriorityLabel(row.fairness_score)} {row.fairness_score}
+                      </Badge>
+                      <Badge variant="outline" className="ml-2 mt-1.5 text-xs bg-primary/5 text-primary">
+                        {getMetricLabel(reportMode)} {getMetricValue(row, reportMode)}
                       </Badge>
                     </div>
                     <button 
