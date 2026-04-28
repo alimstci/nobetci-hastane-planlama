@@ -70,10 +70,23 @@ function readCell(row: Record<string, unknown>, keys: string[]) {
   return entry ? String(entry[1] || '').trim() : '';
 }
 
+function downloadWorkbook(filename: string, sheetName: string, rows: Record<string, string>[]) {
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  XLSX.writeFile(workbook, filename);
+}
+
 function getGroupLabel(groupType: GroupType) {
   if (groupType === 'weekend') return 'Hafta Sonu';
   if (groupType === 'night_only') return 'Sadece Gece';
   return 'Normal';
+}
+
+function getExcelGroupLabel(groupType: GroupType) {
+  if (groupType === 'weekend') return 'HAFTA SONU';
+  if (groupType === 'night_only') return 'SADECE GECE';
+  return 'HAFTA ICI';
 }
 
 export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
@@ -118,17 +131,34 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
         : '';
 
       return {
-        full_name: doctor.full_name,
-        group_type: doctor.group_type,
-        is_active: doctor.is_active ? 'aktif' : 'pasif',
-        ekuri_partner: partner || '',
+        DOKTOR: doctor.full_name,
+        'EKURISI': partner || '',
+        'CALISMA GUNU': getExcelGroupLabel(doctor.group_type),
+        DURUM: doctor.is_active ? 'AKTIF' : 'PASIF',
       };
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Doktorlar');
-    XLSX.writeFile(workbook, 'nobetci-doktorlar.xlsx');
+    downloadWorkbook('nobetci-doktorlar.xlsx', 'Doktorlar', rows);
+  };
+
+  const handleTemplateDownload = () => {
+    downloadWorkbook('nobetci-personel-sablonu.xlsx', 'Personel Sablonu', [
+      {
+        DOKTOR: 'RAMAZAN BULDUK',
+        EKURISI: 'SUMEYYE DOGAN',
+        'CALISMA GUNU': 'HAFTA ICI',
+      },
+      {
+        DOKTOR: 'HAMDULLAH CAKIR',
+        EKURISI: 'IDRIS GENC',
+        'CALISMA GUNU': 'HAFTA SONU',
+      },
+      {
+        DOKTOR: 'GECE NOBET DOKTORU',
+        EKURISI: '',
+        'CALISMA GUNU': 'SADECE GECE',
+      },
+    ]);
   };
 
   const handleFile = async (file: File | null) => {
@@ -140,8 +170,8 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
     const parsedRows = rawRows
       .map(row => ({
         fullName: readCell(row, ['full_name', 'ad soyad', 'ad_soyad', 'isim', 'doktor', 'doctor']),
-        groupType: normalizeGroup(readCell(row, ['group_type', 'grup', 'group'])),
-        ekuriPartnerName: readCell(row, ['ekuri_partner', 'ekuri', 'partner', 'eküri']),
+        groupType: normalizeGroup(readCell(row, ['group_type', 'grup', 'group', 'calisma gunu', '\u00e7al\u0131\u015fma g\u00fcn\u00fc'])),
+        ekuriPartnerName: readCell(row, ['ekuri_partner', 'ekuri', 'ekurisi', 'partner', 'ek\u00fcri', 'ek\u00fcrisi']),
       }))
       .filter(row => row.fullName);
 
@@ -262,7 +292,7 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
                 <span className="text-xs font-bold">Beklenen Excel başlıkları</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {['full_name', 'group_type', 'ekuri_partner'].map(label => (
+                {['DOKTOR', 'EKURISI', 'CALISMA GUNU'].map(label => (
                   <Badge key={label} variant="outline" className="bg-white text-[10px]">{label}</Badge>
                 ))}
               </div>
@@ -291,6 +321,10 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
                   <div className="mt-5 flex flex-wrap gap-2">
                     <Button onClick={handleImport} disabled={loading || importRows.length === 0}>
                       {importRows.length > 0 ? `${importRows.length} Satırı İçe Aktar` : 'Dosya Bekleniyor'}
+                    </Button>
+                    <Button variant="outline" onClick={handleTemplateDownload}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Sablon Indir
                     </Button>
                     <Button variant="outline" onClick={handleExport}>
                       <Download className="mr-2 h-4 w-4" />

@@ -184,6 +184,39 @@ function normalizeDoctorName(name: string) {
   return name.trim().replace(/\s+/g, ' ');
 }
 
+async function upsertDoctorByName(fullName: string, groupType: GroupType) {
+  const { data: existingDoctor, error: existingError } = await supabase
+    .from('doctors')
+    .select('id, group_type, ekuri_pair_id')
+    .eq('full_name', fullName)
+    .maybeSingle();
+
+  if (existingError) throw new Error(existingError.message);
+
+  if (existingDoctor) {
+    const { data: updatedDoctor, error: updateError } = await supabase
+      .from('doctors')
+      .update({ group_type: groupType, is_active: true })
+      .eq('id', existingDoctor.id)
+      .select('id, group_type, ekuri_pair_id')
+      .single();
+
+    if (updateError) throw new Error(updateError.message);
+    await initializeDoctorStats(updatedDoctor.id);
+    return updatedDoctor;
+  }
+
+  const { data: insertedDoctor, error: insertError } = await supabase
+    .from('doctors')
+    .insert([{ full_name: fullName, group_type: groupType, is_active: true }])
+    .select('id, group_type, ekuri_pair_id')
+    .single();
+
+  if (insertError) throw new Error(insertError.message);
+  await initializeDoctorStats(insertedDoctor.id);
+  return insertedDoctor;
+}
+
 export async function bulkImportDoctors(rows: BulkDoctorInput[]) {
   const normalizedRows = rows
     .map(row => ({
@@ -196,35 +229,11 @@ export async function bulkImportDoctors(rows: BulkDoctorInput[]) {
   if (normalizedRows.length === 0) throw new Error('İçe aktarılacak doktor bulunamadı.');
 
   for (const row of normalizedRows) {
-    const { data: existingDoctor, error: existingError } = await supabase
-      .from('doctors')
-      .select('id, group_type, ekuri_pair_id')
-      .eq('full_name', row.fullName)
-      .maybeSingle();
+    await upsertDoctorByName(row.fullName, row.groupType);
 
-    if (existingError) throw new Error(existingError.message);
-
-    if (existingDoctor) {
-      const { data: updatedDoctor, error: updateError } = await supabase
-        .from('doctors')
-        .update({ group_type: row.groupType, is_active: true })
-        .eq('id', existingDoctor.id)
-        .select('id, group_type, ekuri_pair_id')
-        .single();
-
-      if (updateError) throw new Error(updateError.message);
-      await initializeDoctorStats(updatedDoctor.id);
-      continue;
+    if (row.ekuriPartnerName) {
+      await upsertDoctorByName(row.ekuriPartnerName, row.groupType);
     }
-
-    const { data: insertedDoctor, error: insertError } = await supabase
-      .from('doctors')
-      .insert([{ full_name: row.fullName, group_type: row.groupType, is_active: true }])
-      .select('id, group_type, ekuri_pair_id')
-      .single();
-
-    if (insertError) throw new Error(insertError.message);
-    await initializeDoctorStats(insertedDoctor.id);
   }
 
   const pairRows = normalizedRows
@@ -238,7 +247,13 @@ export async function bulkImportDoctors(rows: BulkDoctorInput[]) {
 
   revalidatePath('/admin/doctors');
   revalidatePath('/admin/plans');
-  return { imported: normalizedRows.length, paired: pairResult.created, skippedPairs: pairResult.skipped };
+  const importedNames = new Set<string>();
+  normalizedRows.forEach(row => {
+    importedNames.add(row.fullName.toLocaleLowerCase('tr-TR'));
+    if (row.ekuriPartnerName) importedNames.add(row.ekuriPartnerName.toLocaleLowerCase('tr-TR'));
+  });
+
+  return { imported: importedNames.size, paired: pairResult.created, skippedPairs: pairResult.skipped };
 }
 
 export async function createEkuriPair(doctor1Id: string, doctor2Id: string) {
