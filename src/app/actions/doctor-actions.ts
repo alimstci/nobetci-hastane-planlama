@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase, Doctor, GroupType } from '@/lib/supabase';
+import { supabase, GroupType } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
 export async function getDoctors() {
@@ -60,8 +60,8 @@ export async function getDetailedDoctorStats(doctorId: string) {
 
 async function initializeDoctorStats(doctorId: string) {
   const currentYear = new Date().getFullYear();
-  await supabase.from('night_debt').insert([{ doctor_id: doctorId }]);
-  await supabase.from('yearly_fairness').insert([{ doctor_id: doctorId, year: currentYear }]);
+  await supabase.from('night_debt').upsert([{ doctor_id: doctorId }], { onConflict: 'doctor_id', ignoreDuplicates: true });
+  await supabase.from('yearly_fairness').upsert([{ doctor_id: doctorId, year: currentYear }], { onConflict: 'doctor_id,year', ignoreDuplicates: true });
 }
 
 export async function addDoctor(fullName: string, groupType: GroupType, ekuriPartnerName?: string) {
@@ -158,6 +158,89 @@ export async function deleteDoctor(doctorId: string) {
   revalidatePath('/admin/plans');
 }
 
+export async function bulkDeleteDoctors(doctorIds: string[]) {
+  const ids = [...new Set(doctorIds)].filter(Boolean);
+  if (ids.length === 0) throw new Error('Silinecek doktor seçilmedi.');
+
+  const { error } = await supabase
+    .from('doctors')
+    .delete()
+    .in('id', ids);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/admin/doctors');
+  revalidatePath('/admin/plans');
+  return { deleted: ids.length };
+}
+
+type BulkDoctorInput = {
+  fullName: string;
+  groupType: GroupType;
+  ekuriPartnerName?: string;
+};
+
+function normalizeDoctorName(name: string) {
+  return name.trim().replace(/\s+/g, ' ');
+}
+
+export async function bulkImportDoctors(rows: BulkDoctorInput[]) {
+  const normalizedRows = rows
+    .map(row => ({
+      fullName: normalizeDoctorName(row.fullName || ''),
+      groupType: row.groupType || 'normal',
+      ekuriPartnerName: row.ekuriPartnerName ? normalizeDoctorName(row.ekuriPartnerName) : '',
+    }))
+    .filter(row => row.fullName);
+
+  if (normalizedRows.length === 0) throw new Error('İçe aktarılacak doktor bulunamadı.');
+
+  for (const row of normalizedRows) {
+    const { data: existingDoctor, error: existingError } = await supabase
+      .from('doctors')
+      .select('id, group_type, ekuri_pair_id')
+      .eq('full_name', row.fullName)
+      .maybeSingle();
+
+    if (existingError) throw new Error(existingError.message);
+
+    if (existingDoctor) {
+      const { data: updatedDoctor, error: updateError } = await supabase
+        .from('doctors')
+        .update({ group_type: row.groupType, is_active: true })
+        .eq('id', existingDoctor.id)
+        .select('id, group_type, ekuri_pair_id')
+        .single();
+
+      if (updateError) throw new Error(updateError.message);
+      await initializeDoctorStats(updatedDoctor.id);
+      continue;
+    }
+
+    const { data: insertedDoctor, error: insertError } = await supabase
+      .from('doctors')
+      .insert([{ full_name: row.fullName, group_type: row.groupType, is_active: true }])
+      .select('id, group_type, ekuri_pair_id')
+      .single();
+
+    if (insertError) throw new Error(insertError.message);
+    await initializeDoctorStats(insertedDoctor.id);
+  }
+
+  const pairRows = normalizedRows
+    .filter(row => row.ekuriPartnerName)
+    .map(row => ({
+      doctor1Name: row.fullName,
+      doctor2Name: row.ekuriPartnerName,
+    }));
+
+  const pairResult = pairRows.length > 0 ? await bulkCreateEkuriPairs(pairRows) : { created: 0, skipped: 0 };
+
+  revalidatePath('/admin/doctors');
+  revalidatePath('/admin/plans');
+  return { imported: normalizedRows.length, paired: pairResult.created, skippedPairs: pairResult.skipped };
+}
+
 export async function createEkuriPair(doctor1Id: string, doctor2Id: string) {
   const { data: doctors, error: doctorsError } = await supabase
     .from('doctors')
@@ -190,6 +273,40 @@ export async function createEkuriPair(doctor1Id: string, doctor2Id: string) {
 
   revalidatePath('/admin/doctors');
   return pair;
+}
+
+export async function bulkCreateEkuriPairs(rows: { doctor1Name: string; doctor2Name: string }[]) {
+  const normalizedRows = rows
+    .map(row => ({
+      doctor1Name: normalizeDoctorName(row.doctor1Name || ''),
+      doctor2Name: normalizeDoctorName(row.doctor2Name || ''),
+    }))
+    .filter(row => row.doctor1Name && row.doctor2Name && row.doctor1Name !== row.doctor2Name);
+
+  if (normalizedRows.length === 0) throw new Error('Eşleştirilecek eküri satırı bulunamadı.');
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const row of normalizedRows) {
+    const { data: doctors, error } = await supabase
+      .from('doctors')
+      .select('id, full_name, ekuri_pair_id')
+      .in('full_name', [row.doctor1Name, row.doctor2Name]);
+
+    if (error) throw new Error(error.message);
+    if (!doctors || doctors.length !== 2 || doctors.some(doctor => doctor.ekuri_pair_id)) {
+      skipped++;
+      continue;
+    }
+
+    await createEkuriPair(doctors[0].id, doctors[1].id);
+    created++;
+  }
+
+  revalidatePath('/admin/doctors');
+  revalidatePath('/admin/plans');
+  return { created, skipped };
 }
 
 export async function deleteEkuriPair(pairId: string) {

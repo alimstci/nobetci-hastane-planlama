@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  UserPlus, 
   Users, 
   ShieldCheck, 
   Stethoscope, 
@@ -26,17 +25,38 @@ import { PairDoctorDialog } from '@/components/pair-doctor-dialog';
 import { ManageLeavesDialog } from '@/components/manage-leaves-dialog';
 import { ManageEkuriDialog } from '@/components/manage-ekuri-dialog';
 import { EditDoctorDialog } from '@/components/edit-doctor-dialog';
+import { BulkDoctorToolsDialog } from '@/components/bulk-doctor-tools-dialog';
 import { deleteDoctor, getDetailedDoctorStats, setDoctorActive } from '@/app/actions/doctor-actions';
 import { toast } from 'sonner';
+import { GroupType } from '@/lib/supabase';
+
+type DoctorRow = {
+  id: string;
+  full_name: string;
+  group_type: GroupType;
+  ekuri_pair_id?: string | null;
+  is_active: boolean;
+  created_at: string;
+  ekuri_pairs?: {
+    doctor1: { id: string; full_name: string };
+    doctor2: { id: string; full_name: string };
+  } | null;
+};
+
+type DoctorStats = {
+  total_day_shifts: number;
+  total_night_shifts: number;
+  holiday_count: number;
+};
 
 interface Props {
-  initialDoctors: any[];
+  initialDoctors: DoctorRow[];
 }
 
 export function DoctorsClient({ initialDoctors }: Props) {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(initialDoctors?.[0]?.id || null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DoctorStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
@@ -80,8 +100,8 @@ export function DoctorsClient({ initialDoctors }: Props) {
     try {
       await setDoctorActive(selectedDoctor.id, !selectedDoctor.is_active);
       toast.success(selectedDoctor.is_active ? 'Doktor pasifleştirildi' : 'Doktor aktif edildi');
-    } catch (error: any) {
-      toast.error(error?.message || 'Durum güncellenemedi');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Durum guncellenemedi');
     }
   };
 
@@ -94,8 +114,8 @@ export function DoctorsClient({ initialDoctors }: Props) {
       await deleteDoctor(selectedDoctor.id);
       toast.success('Doktor silindi');
       setSelectedId(null);
-    } catch (error: any) {
-      toast.error(error?.message || 'Doktor silinemedi');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Doktor silinemedi');
     }
   };
 
@@ -110,6 +130,7 @@ export function DoctorsClient({ initialDoctors }: Props) {
               Personel
             </h2>
             <div className="flex items-center gap-2">
+              <BulkDoctorToolsDialog doctors={initialDoctors} />
               <ManageEkuriDialog doctors={initialDoctors} />
               <AddDoctorDialog />
             </div>
