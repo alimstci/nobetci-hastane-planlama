@@ -18,7 +18,7 @@ export interface SchedulerInput {
   fairnessStats: YearlyFairness[];
   holidays: string[]; // ISO date strings
   leaves: { doctor_id: string; start_date: string; end_date: string } [];
-  externalAssignments?: Pick<ShiftAssignment, 'doctor_id' | 'date'>[];
+  externalAssignments?: Pick<ShiftAssignment, 'doctor_id' | 'date' | 'shift_type'>[];
 }
 
 export class Scheduler {
@@ -28,6 +28,9 @@ export class Scheduler {
   private fairnessMap: Map<string, YearlyFairness>;
   private holidaysSet: Set<string>;
   private monthlyDayCounts: Map<string, number> = new Map();
+  private monthlyTotalCounts: Map<string, number> = new Map();
+  private historyStats: Map<string, { previousMonthTotal: number; previousMonthNight: number; annualTotal: number; annualNight: number }> = new Map();
+  private previousMonthKey: string;
   
   // v2.2: Anlık yük takibi için yerel sayaçlar
   private localStats: Map<string, { total_day: number; holiday: number }>;
@@ -36,6 +39,7 @@ export class Scheduler {
     this.doctorMap = new Map(input.doctors.map(d => [d.id, d]));
     this.debtMap = new Map(input.nightDebts.map(d => [d.doctor_id, d]));
     this.fairnessMap = new Map(input.fairnessStats.map(f => [f.doctor_id, f]));
+    this.previousMonthKey = format(new Date(input.year, input.month - 2, 1), 'yyyy-MM');
     
     // 2026 Türkiye tatillerini ve inputtan gelenleri birleştir
     this.holidaysSet = new Set(input.holidays);
@@ -48,6 +52,7 @@ export class Scheduler {
         holiday: stats?.holiday_count || 0 
       }];
     }));
+    this.historyStats = this.buildHistoryStats();
   }
 
   public generatePlan(planId: string): ShiftAssignment[] {
@@ -93,6 +98,56 @@ export class Scheduler {
     return !isLeave && !hasConsecutive;
   }
 
+  private buildHistoryStats() {
+    const stats = new Map<string, { previousMonthTotal: number; previousMonthNight: number; annualTotal: number; annualNight: number }>();
+    for (const doctor of this.input.doctors) {
+      stats.set(doctor.id, { previousMonthTotal: 0, previousMonthNight: 0, annualTotal: 0, annualNight: 0 });
+    }
+
+    for (const assignment of this.input.externalAssignments || []) {
+      const assignmentYear = parseISO(assignment.date).getFullYear();
+      const doctorStats = stats.get(assignment.doctor_id);
+      if (!doctorStats) continue;
+
+      const isPreviousMonth = assignment.date.startsWith(this.previousMonthKey);
+      if (assignmentYear === this.input.year) {
+        doctorStats.annualTotal++;
+        if (assignment.shift_type === 'gece') doctorStats.annualNight++;
+      }
+      if (isPreviousMonth) {
+        doctorStats.previousMonthTotal++;
+        if (assignment.shift_type === 'gece') doctorStats.previousMonthNight++;
+      }
+    }
+
+    return stats;
+  }
+
+  private getMonthlyTotal(doctorId: string) {
+    return this.monthlyTotalCounts.get(doctorId) || 0;
+  }
+
+  private canTakeMonthlyShift(doctorId: string, maxTotalShiftsPerMonth = 3) {
+    return this.getMonthlyTotal(doctorId) < maxTotalShiftsPerMonth;
+  }
+
+  private isRestPoolDoctor(doctorId: string) {
+    return (this.historyStats.get(doctorId)?.previousMonthTotal || 0) >= 3;
+  }
+
+  private compareRestPool(a: Doctor, b: Doctor) {
+    const restA = this.isRestPoolDoctor(a.id);
+    const restB = this.isRestPoolDoctor(b.id);
+    if (restA === restB) return 0;
+    return restA ? 1 : -1;
+  }
+
+  private chooseRestAwareCandidates(doctors: Doctor[], requiredCount: number) {
+    const preferred = doctors.filter(doctor => !this.isRestPoolDoctor(doctor.id));
+    const restPool = doctors.filter(doctor => this.isRestPoolDoctor(doctor.id));
+    return preferred.length >= requiredCount ? [...preferred, ...restPool] : doctors;
+  }
+
   // v2.2 Helper: Diziyi karıştır (Adalet için)
   private shuffle<T>(array: T[]): T[] {
     return array.sort(() => Math.random() - 0.5);
@@ -108,10 +163,22 @@ export class Scheduler {
       
       // Borç puanına ve son nöbet ayına göre sırala + Eşitlik durumunda KARIŞTIR
       const candidates = this.shuffle([...allDoctors])
+        .filter(doctor => this.canTakeMonthlyShift(doctor.id))
         .sort((a, b) => {
           const debtA = this.debtMap.get(a.id)?.debt_points || 0;
           const debtB = this.debtMap.get(b.id)?.debt_points || 0;
           if (debtA !== debtB) return debtB - debtA;
+          const historyA = this.historyStats.get(a.id);
+          const historyB = this.historyStats.get(b.id);
+          if ((historyA?.previousMonthNight || 0) !== (historyB?.previousMonthNight || 0)) {
+            return (historyA?.previousMonthNight || 0) - (historyB?.previousMonthNight || 0);
+          }
+          if ((historyA?.previousMonthTotal || 0) !== (historyB?.previousMonthTotal || 0)) {
+            return (historyA?.previousMonthTotal || 0) - (historyB?.previousMonthTotal || 0);
+          }
+          if ((historyA?.annualNight || 0) !== (historyB?.annualNight || 0)) {
+            return (historyA?.annualNight || 0) - (historyB?.annualNight || 0);
+          }
           return (this.debtMap.get(a.id)?.last_night_month || '').localeCompare(
             this.debtMap.get(b.id)?.last_night_month || ''
           );
@@ -131,6 +198,7 @@ export class Scheduler {
           is_ekuri: false
         });
         usedInMonth.add(bestDoctor.id);
+        this.incrementMonthlyTotal(bestDoctor.id);
       }
     }
   }
@@ -145,11 +213,21 @@ export class Scheduler {
       const selectedForDay: string[] = [];
 
       // Borç puanına (Kümülatif Tatil) + KARIŞTIR
-      const candidates = this.shuffle([...weekendDoctors])
+      const restAwareDoctors = this.chooseRestAwareCandidates(weekendDoctors, 2);
+      const candidates = this.shuffle([...restAwareDoctors])
+        .filter(doctor => this.canTakeMonthlyShift(doctor.id))
         .sort((a, b) => {
+          const restCompare = this.compareRestPool(a, b);
+          if (restCompare !== 0) return restCompare;
           const statsA = this.localStats.get(a.id)?.holiday || 0;
           const statsB = this.localStats.get(b.id)?.holiday || 0;
-          return statsA - statsB;
+          if (statsA !== statsB) return statsA - statsB;
+          const historyA = this.historyStats.get(a.id);
+          const historyB = this.historyStats.get(b.id);
+          if ((historyA?.previousMonthTotal || 0) !== (historyB?.previousMonthTotal || 0)) {
+            return (historyA?.previousMonthTotal || 0) - (historyB?.previousMonthTotal || 0);
+          }
+          return (historyA?.annualTotal || 0) - (historyB?.annualTotal || 0);
         });
 
       for (const doctor of candidates) {
@@ -158,7 +236,7 @@ export class Scheduler {
         if (!this.isDoctorAvailable(doctor.id, day)) continue;
 
         const partnerId = doctor.ekuri_pair_id ? this.findPartnerId(doctor) : null;
-        const canTakePartner = partnerId && this.isDoctorAvailable(partnerId, day) && selectedForDay.length === 0;
+        const canTakePartner = partnerId && this.isDoctorAvailable(partnerId, day) && this.canTakeMonthlyShift(partnerId) && selectedForDay.length === 0;
 
         this.addAssignment(planId, dateStr, doctor.id, !!canTakePartner, partnerId, true);
         selectedForDay.push(doctor.id);
@@ -182,23 +260,34 @@ export class Scheduler {
       const selectedForDay: string[] = [];
 
       // Gün dengesine (Kümülatif Toplam) + KARIŞTIR
-      const candidates = this.shuffle([...normalDoctors])
+      const restAwareDoctors = this.chooseRestAwareCandidates(normalDoctors, 3);
+      const candidates = this.shuffle([...restAwareDoctors])
         .sort((a, b) => {
+          const restCompare = this.compareRestPool(a, b);
+          if (restCompare !== 0) return restCompare;
           const statsA = this.localStats.get(a.id)?.total_day || 0;
           const statsB = this.localStats.get(b.id)?.total_day || 0;
-          return statsA - statsB;
+          if (statsA !== statsB) return statsA - statsB;
+          const historyA = this.historyStats.get(a.id);
+          const historyB = this.historyStats.get(b.id);
+          if ((historyA?.previousMonthTotal || 0) !== (historyB?.previousMonthTotal || 0)) {
+            return (historyA?.previousMonthTotal || 0) - (historyB?.previousMonthTotal || 0);
+          }
+          return (historyA?.annualTotal || 0) - (historyB?.annualTotal || 0);
         });
 
       for (const doctor of candidates) {
         if (selectedForDay.length >= 3) break;
         if (selectedForDay.includes(doctor.id)) continue;
         if (!this.canTakeWeekdayDayShift(doctor.id, maxDayShiftsPerMonth)) continue;
+        if (!this.canTakeMonthlyShift(doctor.id)) continue;
         if (!this.isDoctorAvailable(doctor.id, day)) continue;
 
         const partnerId = doctor.ekuri_pair_id ? this.findPartnerId(doctor) : null;
         const canTakePartner = partnerId && 
                                this.isDoctorAvailable(partnerId, day) && 
                                this.canTakeWeekdayDayShift(partnerId, maxDayShiftsPerMonth) &&
+                               this.canTakeMonthlyShift(partnerId) &&
                                selectedForDay.length <= 1 && 
                                !selectedForDay.includes(partnerId!);
 
@@ -232,10 +321,15 @@ export class Scheduler {
     }
 
     this.monthlyDayCounts.set(doctorId, (this.monthlyDayCounts.get(doctorId) || 0) + 1);
+    this.incrementMonthlyTotal(doctorId);
   }
 
   private canTakeWeekdayDayShift(doctorId: string, maxDayShiftsPerMonth: number) {
     return (this.monthlyDayCounts.get(doctorId) || 0) < maxDayShiftsPerMonth;
+  }
+
+  private incrementMonthlyTotal(doctorId: string) {
+    this.monthlyTotalCounts.set(doctorId, (this.monthlyTotalCounts.get(doctorId) || 0) + 1);
   }
 
   private findPartnerId(doctor: Doctor): string | null {

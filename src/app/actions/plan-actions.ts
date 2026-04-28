@@ -111,7 +111,17 @@ export async function getPlan(yearMonth: string) {
 
   if (leaveError) throw new Error(leaveError.message);
 
-  return { plan, assignments, doctors, leaves };
+  const previousMonthStart = format(startOfMonth(new Date(year, month - 2)), 'yyyy-MM-dd');
+  const previousMonthEnd = format(endOfMonth(new Date(year, month - 2)), 'yyyy-MM-dd');
+  const { data: previousAssignments, error: previousError } = await supabase
+    .from('shift_assignments')
+    .select('doctor_id, date, shift_type')
+    .gte('date', previousMonthStart)
+    .lte('date', previousMonthEnd);
+
+  if (previousError) throw new Error(previousError.message);
+
+  return { plan, assignments, doctors, leaves, previousAssignments };
 }
 
 export async function generateAutoPlan(yearMonth: string) {
@@ -133,7 +143,7 @@ export async function generateAutoPlan(yearMonth: string) {
 
   const { data: neighboringAssignments, error: neighboringError } = await supabase
     .from('shift_assignments')
-    .select('doctor_id, date')
+    .select('doctor_id, date, shift_type')
     .neq('plan_id', plan.id);
 
   if (neighboringError) throw new Error(neighboringError.message);
@@ -298,6 +308,33 @@ export async function updateShiftAssignment(assignmentId: string, doctorId: stri
     throw new Error(`Peş peşe nöbet kuralı ihlal ediliyor: ${conflict.date} tarihli nöbet var.`);
   }
 
+  const [year, month] = currentAssignment.plan.year_month.split('-').map(Number);
+  const monthStart = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
+  const monthEnd = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
+  const { data: monthlyAssignments, error: monthlyError } = await supabase
+    .from('shift_assignments')
+    .select('id, shift_type')
+    .eq('doctor_id', doctorId)
+    .gte('date', monthStart)
+    .lte('date', monthEnd)
+    .neq('id', assignmentId);
+
+  if (monthlyError) throw new Error(monthlyError.message);
+
+  const sameMonthAssignments = monthlyAssignments || [];
+  if (sameMonthAssignments.length >= 3) {
+    throw new Error('Bu doktor bu ay maksimum 3 nobet sinirina ulasti.');
+  }
+  if (shiftType === 'gece' && sameMonthAssignments.some(shift => shift.shift_type === 'gece')) {
+    throw new Error('Bir doktor ayni ay icinde ikinci gece nobetine yazilamaz.');
+  }
+  if (shiftType === 'gunduz' && doctor.group_type === 'normal') {
+    const weekdayDayCount = sameMonthAssignments.filter(shift => shift.shift_type === 'gunduz').length;
+    if (weekdayDayCount >= 2) {
+      throw new Error('Hafta ici doktoru ayni ay icinde en fazla 2 gunduz nobeti tutabilir.');
+    }
+  }
+
   const { error: updateError } = await supabase
     .from('shift_assignments')
     .update({
@@ -309,8 +346,6 @@ export async function updateShiftAssignment(assignmentId: string, doctorId: stri
     .eq('id', assignmentId);
 
   if (updateError) throw new Error(updateError.message);
-
-  const [year] = currentAssignment.plan.year_month.split('-').map(Number);
   await recalculateStats(year, currentAssignment.plan_id);
   revalidatePath(`/admin/plans/${currentAssignment.plan.year_month}`);
   revalidatePath('/admin/fairness');

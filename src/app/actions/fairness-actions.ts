@@ -42,7 +42,7 @@ export async function getFairnessStats(year: number) {
     nightCounts.set(assignment.doctor_id, (nightCounts.get(assignment.doctor_id) || 0) + 1);
   }
 
-  return (data || [])
+  const enrichedRows = (data || [])
     .map((row: FairnessRow) => {
       const nightDebt = Array.isArray(row.doctor?.night_debt)
         ? row.doctor.night_debt[0]
@@ -58,6 +58,16 @@ export async function getFairnessStats(year: number) {
         holiday_shifts: holidayShifts,
         total_shifts: totalDayShifts + totalNightShifts,
       };
+    });
+  const averageLoad = enrichedRows.length > 0
+    ? enrichedRows.reduce((sum, row) => sum + row.total_shifts, 0) / enrichedRows.length
+    : 0;
+
+  return enrichedRows
+    .map(row => {
+      const loadGap = Math.abs(row.total_shifts - averageLoad);
+      const fairnessScore = Math.max(0, Math.round(100 - loadGap * 8 - row.total_night_shifts * 1.5 - row.holiday_shifts * 0.5));
+      return { ...row, fairness_score: fairnessScore };
     })
     .sort((a, b) => b.total_shifts - a.total_shifts);
 }

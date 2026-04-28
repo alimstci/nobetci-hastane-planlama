@@ -48,6 +48,7 @@ type FairnessRow = {
   holiday_count?: number | null;
   holiday_shifts?: number | null;
   total_shifts?: number | null;
+  fairness_score?: number | null;
   monday?: number | null;
   tuesday?: number | null;
   wednesday?: number | null;
@@ -88,6 +89,7 @@ function normalizeFairnessRow(row: FairnessRow) {
     total_night_shifts: totalNightShifts,
     holiday_shifts: holidayShifts,
     total_shifts: Number(row.total_shifts ?? totalDayShifts + totalNightShifts),
+    fairness_score: Number(row.fairness_score ?? 0),
   };
 }
 
@@ -285,6 +287,9 @@ export default function FairnessDashboard({ stats }: Props) {
                       </h3>
                       <Badge variant="outline" className="mt-1.5 bg-slate-100/50 dark:bg-white/5 text-xs">
                         {getGroupLabel(row.doctor?.group_type)}
+                      </Badge>
+                      <Badge variant={Number(row.fairness_score || 0) >= 85 ? 'success' : 'outline'} className="ml-2 mt-1.5 text-xs">
+                        Skor {row.fairness_score}
                       </Badge>
                     </div>
                     <button 

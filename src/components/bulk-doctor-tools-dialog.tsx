@@ -89,6 +89,32 @@ function getExcelGroupLabel(groupType: GroupType) {
   return 'HAFTA ICI';
 }
 
+function validateImportRows(rows: ImportRow[]) {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const seen = new Set<string>();
+
+  rows.forEach((row, index) => {
+    const rowNo = index + 2;
+    const fullNameKey = row.fullName.toLocaleLowerCase('tr-TR');
+    if (seen.has(fullNameKey)) errors.push(`${rowNo}. satır: doktor adı tekrar ediyor (${row.fullName}).`);
+    seen.add(fullNameKey);
+    if (row.ekuriPartnerName) {
+      const partnerKey = row.ekuriPartnerName.toLocaleLowerCase('tr-TR');
+      if (fullNameKey === partnerKey) errors.push(`${rowNo}. satır: doktor kendisiyle eküri olamaz.`);
+      seen.add(partnerKey);
+    }
+    if (row.groupType === 'weekend' && !row.ekuriPartnerName) {
+      errors.push(`${rowNo}. satır: hafta sonu grubu için eküri zorunlu.`);
+    }
+    if (row.groupType === 'night_only' && row.ekuriPartnerName) {
+      warnings.push(`${rowNo}. satır: sadece gece grubunda eküri bilgisi dikkate alınmaz.`);
+    }
+  });
+
+  return { errors, warnings };
+}
+
 export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('excel');
@@ -104,6 +130,7 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
     () => pairText.split('\n').filter(line => line.split(/[;,]/).map(part => part.trim()).filter(Boolean).length >= 2).length,
     [pairText]
   );
+  const importIssues = useMemo(() => validateImportRows(importRows), [importRows]);
   const filteredDeleteDoctors = useMemo(() => {
     const term = deleteSearch.toLocaleLowerCase('tr-TR');
     return doctors.filter(doctor => doctor.full_name.toLocaleLowerCase('tr-TR').includes(term));
@@ -319,7 +346,7 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
                   </label>
 
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Button onClick={handleImport} disabled={loading || importRows.length === 0}>
+                    <Button onClick={handleImport} disabled={loading || importRows.length === 0 || importIssues.errors.length > 0}>
                       {importRows.length > 0 ? `${importRows.length} Satırı İçe Aktar` : 'Dosya Bekleniyor'}
                     </Button>
                     <Button variant="outline" onClick={handleTemplateDownload}>
@@ -333,7 +360,7 @@ export function BulkDoctorToolsDialog({ doctors }: BulkDoctorToolsDialogProps) {
                   </div>
                 </section>
 
-                <PreviewPanel rows={importRows} />
+                <PreviewPanel rows={importRows} issues={importIssues} />
               </div>
             )}
 
@@ -441,7 +468,7 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
-function PreviewPanel({ rows }: { rows: ImportRow[] }) {
+function PreviewPanel({ rows, issues }: { rows: ImportRow[]; issues: { errors: string[]; warnings: string[] } }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5">
       <div className="flex items-center justify-between gap-4">
@@ -469,6 +496,21 @@ function PreviewPanel({ rows }: { rows: ImportRow[] }) {
           ))
         )}
       </div>
+
+      {(issues.errors.length > 0 || issues.warnings.length > 0) && (
+        <div className="mt-4 space-y-2">
+          {issues.errors.map(issue => (
+            <div key={issue} className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+              {issue}
+            </div>
+          ))}
+          {issues.warnings.map(issue => (
+            <div key={issue} className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+              {issue}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

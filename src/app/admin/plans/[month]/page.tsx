@@ -1,13 +1,14 @@
-import { getPlan, generateAutoPlan } from '@/app/actions/plan-actions';
+import { getPlan } from '@/app/actions/plan-actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MonthNavigator } from '@/components/month-navigator';
 import { ExportActions } from '@/components/export-actions';
 import { ShiftEditDialog } from '@/components/shift-edit-dialog';
+import { GeneratePlanButton } from '@/components/generate-plan-button';
+import { PlanQualityReport } from '@/components/plan-quality-report';
 import { 
   Calendar as CalendarIcon, 
-  Sparkles, 
   Users, 
   Plane,
   Info,
@@ -22,7 +23,6 @@ import {
   endOfMonth, 
   eachDayOfInterval, 
   isWeekend, 
-  getDay,
   startOfWeek,
   endOfWeek
 } from 'date-fns';
@@ -32,7 +32,7 @@ import { isTurkishOfficialHoliday } from '@/lib/holidays';
 
 export default async function PlanPage({ params }: { params: Promise<{ month: string }> }) {
   const { month: yearMonth } = await params; 
-  const { plan, assignments, doctors, leaves } = await getPlan(yearMonth);
+  const { plan, assignments, doctors, leaves, previousAssignments } = await getPlan(yearMonth);
   
   const [year, month] = yearMonth.split('-').map(Number);
   const monthStart = startOfMonth(new Date(year, month - 1));
@@ -45,6 +45,12 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
 
   const assignedDoctorIds = new Set(assignments?.map(a => a.doctor_id));
   const offDutyDoctors = doctors?.filter(d => !assignedDoctorIds.has(d.id)) || [];
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const expectedNightSlots = monthDays.length;
+  const expectedDaySlots = monthDays.reduce((sum, day) => {
+    const isHolidayOrWeekend = isWeekend(day) || isTurkishOfficialHoliday(day);
+    return sum + (isHolidayOrWeekend ? 2 : 3);
+  }, 0);
 
   if (!plan) {
     return (
@@ -60,12 +66,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
         </div>
         <div className="flex justify-center gap-4 pt-4">
           <Button variant="outline" className="h-12 px-8">LISTEYE DÖN</Button>
-          <form action={generateAutoPlan.bind(null, yearMonth)}>
-            <Button type="submit" variant="premium" className="h-12 px-10">
-              <Sparkles className="mr-2 h-4 w-4" />
-              PLANLAMAYI BAŞLAT
-            </Button>
-          </form>
+          <GeneratePlanButton yearMonth={yearMonth} hasAssignments={false} />
         </div>
       </div>
     );
@@ -93,19 +94,17 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
         
         <div className="flex flex-wrap items-end gap-3">
           <ExportActions assignments={assignments} monthName={format(monthStart, 'MMMM yyyy', { locale: tr })} />
-          <form action={generateAutoPlan.bind(null, yearMonth)}>
-            <Button 
-              type="submit"
-              variant="premium"
-              size="lg"
-              className="h-11 px-5"
-            >
-              <Sparkles className="mr-3 h-5 w-5" /> 
-              OTOMATİK HESABI BAŞLAT
-            </Button>
-          </form>
+          <GeneratePlanButton yearMonth={yearMonth} hasAssignments={(assignments?.length || 0) > 0} />
         </div>
       </div>
+
+      <PlanQualityReport
+        assignments={assignments || []}
+        doctors={doctors || []}
+        previousAssignments={previousAssignments || []}
+        expectedDaySlots={expectedDaySlots}
+        expectedNightSlots={expectedNightSlots}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
         {/* 2. Main Calendar - Premium Aurora Grid */}
@@ -152,7 +151,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                       {dayAssignments?.filter(a => a.shift_type === 'gece').map(a => (
                         <div key={a.id} className="px-2 py-1.5 rounded-md bg-slate-900 text-[10px] font-bold text-white border border-slate-800 flex items-center gap-1.5 justify-between group cursor-default">
                           <span className="truncate uppercase tracking-tight">{a.doctor?.full_name}</span>
-                          {a.id && <ShiftEditDialog assignment={a} doctors={doctors || []} />}
+                          {a.id && <ShiftEditDialog assignment={a} doctors={doctors || []} allAssignments={assignments || []} />}
                           <Badge variant="premium" className="h-3 w-3 p-0 rounded-full shrink-0" />
                         </div>
                       ))}
@@ -161,7 +160,7 @@ export default async function PlanPage({ params }: { params: Promise<{ month: st
                       {dayAssignments?.filter(a => a.shift_type === 'gunduz').map(a => (
                         <div key={a.id} className="px-2 py-1.5 rounded-md bg-teal-50 dark:bg-white/5 border border-teal-100 dark:border-white/10 text-[10px] font-bold text-teal-800 dark:text-teal-200 flex items-center gap-1.5 justify-between group cursor-default overflow-hidden">
                           <span className="truncate uppercase tracking-tight">{a.doctor?.full_name}</span>
-                          {a.id && <ShiftEditDialog assignment={a} doctors={doctors || []} />}
+                          {a.id && <ShiftEditDialog assignment={a} doctors={doctors || []} allAssignments={assignments || []} />}
                           {a.is_ekuri && <Users className="h-3 w-3" />}
                         </div>
                       ))}
